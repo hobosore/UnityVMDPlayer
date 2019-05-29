@@ -145,7 +145,7 @@ public class VMDController : MonoBehaviour
         Animate(frameNumber);
 
         //補間
-        Complement(frameNumber);
+        Interpolate(frameNumber);
     }
 
     // Update is called once per frame
@@ -237,7 +237,7 @@ public class VMDController : MonoBehaviour
     {
         this.frameNumber = frameNumber;
         AnimateAsJump(frameNumber);
-        Complement(frameNumber);
+        Interpolate(frameNumber);
     }
     
     public void Pause()
@@ -325,9 +325,9 @@ public class VMDController : MonoBehaviour
         if (rightFootIK != null) { rightFootIK.IKAsJump(frameNumber); }
     }
 
-    void Complement(int frameNumber)
+    void Interpolate(int frameNumber)
     {
-        void complementParentOfAll(float amp = ParentAmplifier)
+        void interpolateParentOfAll(float amp = ParentAmplifier)
         {
             VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親];
             VMD.BoneKeyFrame lastPositionVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親].LastPositionKeyFrame;
@@ -354,7 +354,7 @@ public class VMDController : MonoBehaviour
             }
         }
 
-        void complementBone(VMDReader.BoneKeyFrameGroup.BoneNames boneName)
+        void interpolateBone(VMDReader.BoneKeyFrameGroup.BoneNames boneName)
         {
             Transform boneTransform = boneTransformDictionary[boneName].Item1;
 
@@ -385,11 +385,11 @@ public class VMDController : MonoBehaviour
             }
         }
 
-        if (UseParentOfAll) { complementParentOfAll(); }
-        foreach (VMDReader.BoneKeyFrameGroup.BoneNames boneName in boneTransformDictionary.Keys) { complementBone(boneName); }
-        if (UseCenterIK) { centerIK.ComplementIK(frameNumber); }
-        leftFootIK.ComplementIK(frameNumber);
-        rightFootIK.ComplementIK(frameNumber);
+        if (UseParentOfAll) { interpolateParentOfAll(); }
+        foreach (VMDReader.BoneKeyFrameGroup.BoneNames boneName in boneTransformDictionary.Keys) { interpolateBone(boneName); }
+        if (UseCenterIK) { centerIK.InterpolateIK(frameNumber); }
+        leftFootIK.InterpolateIK(frameNumber);
+        rightFootIK.InterpolateIK(frameNumber);
     }
 
     //VMDではセンターはHipの差分のみの位置、回転情報を持つ
@@ -418,25 +418,25 @@ public class VMDController : MonoBehaviour
 
         public void IK(int frame)
         {
-            //ComplementIK(frame)でSetIKEnableを呼び出すため、ここではSetIKEnableを呼び出さない
+            //InterpolateIK(frame)でSetIKEnableを呼び出すため、ここではSetIKEnableを呼び出さない
 
             VMD.BoneKeyFrame centerBoneFrame = VMDReader.BoneKeyFrameGroups[(int)centerBoneName].GetKeyFrame(frame);
             VMD.BoneKeyFrame grooveBoneFrame = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName].GetKeyFrame(frame);
 
-            ComplementIK(frame);
+            InterpolateIK(frame);
         }
 
         public void IKAsJump(int frame)
         {
-            //ComplementIK(frame)でSetIKEnableを呼び出すため、ここではSetIKEnableを呼び出さない
+            //InterpolateIK(frame)でSetIKEnableを呼び出すため、ここではSetIKEnableを呼び出さない
 
             VMD.BoneKeyFrame centerBoneFrame = VMDReader.BoneKeyFrameGroups[(int)centerBoneName].GetKeyFrameAsJump(frame);
             VMD.BoneKeyFrame grooveBoneFrame = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName].GetKeyFrameAsJump(frame);
 
-            ComplementIK(frame);
+            InterpolateIK(frame);
         }
 
-        public void ComplementIK(int frame)
+        public void InterpolateIK(int frame)
         {
             SetIKEnable(frame);
 
@@ -638,7 +638,7 @@ public class VMDController : MonoBehaviour
             IK();
         }
 
-        public void ComplementIK(int frame)
+        public void InterpolateIK(int frame)
         {
             SetIKEnable(frame);
 

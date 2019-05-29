@@ -1,6 +1,3 @@
-//利用上の注意
-//よろしく使ってください。
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -169,6 +166,17 @@ namespace UnityVMDReader
 
             //ついでに最終フレームも求めておく
             FrameCount = BoneKeyFrameGroups.Where(x => x.BoneKeyFrames.Count > 0).Max(x => x.BoneKeyFrames.Last().Frame);
+        }
+
+        public BoneKeyFrameGroup GetBoneKeyFrameGroup(BoneKeyFrameGroup.BoneNames boneName)
+        {
+            return BoneKeyFrameGroups[(int)boneName];
+        }
+
+        //普通にnullも返ってくる
+        public VMD.BoneKeyFrame GetBoneKeyFrame(BoneKeyFrameGroup.BoneNames boneName, int frameNumber)
+        {
+            return BoneKeyFrameGroups[(int)boneName].GetKeyFrame(frameNumber);
         }
     }
 
