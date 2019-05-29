@@ -130,8 +130,9 @@ namespace UnityVMDReader
         //ボーンごとに分けたキーフレームの集合をボーンの番号順にリストに入れる、これはコンストラクタで初期化される
         public List<BoneKeyFrameGroup> BoneKeyFrameGroups = new List<BoneKeyFrameGroup>();
 
-        void Initialize()
+        void InitializeBoneKeyFrameGroups()
         {
+            BoneKeyFrameGroups.Clear();
             for (int i = 0; i < BoneKeyFrameGroup.BoneStringNames.Count; i++)
             {
                 BoneKeyFrameGroups.Add(new BoneKeyFrameGroup((BoneKeyFrameGroup.BoneNames)i));
@@ -139,12 +140,12 @@ namespace UnityVMDReader
         }
         public VMDReader()
         {
-            Initialize();
+            InitializeBoneKeyFrameGroups();
             RawVMD = new VMD();
         }
         public VMDReader(string filePath)
         {
-            Initialize();
+            InitializeBoneKeyFrameGroups();
             ReadVMD(filePath);
         }
 
@@ -153,7 +154,7 @@ namespace UnityVMDReader
             RawVMD = new VMD(filePath);
 
             //人ボーンのキーフレームをグループごとに分けてBoneKeyFrameGroupsに入れる
-            BoneKeyFrameGroups.Clear();
+            InitializeBoneKeyFrameGroups();
             foreach (VMD.BoneKeyFrame boneKeyFrame in RawVMD.BoneKeyFrames)
             {
                 if (!BoneKeyFrameGroup.BoneStringNames.Contains(boneKeyFrame.Name)) { continue; }
