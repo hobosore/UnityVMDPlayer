@@ -48,7 +48,7 @@ namespace UnityVMDReader
 
             public BoneNames Name { get; private set; }
 
-            public List<VMD.BoneKeyFrame> KeyFrames = new List<VMD.BoneKeyFrame>();
+            public List<VMD.BoneKeyFrame> BoneKeyFrames = new List<VMD.BoneKeyFrame>();
 
             public VMD.BoneKeyFrame CurrentFrame { get; private set; }
             public VMD.BoneKeyFrame.Interpolation Interpolation { get; private set; }
@@ -65,7 +65,7 @@ namespace UnityVMDReader
 
             public VMD.BoneKeyFrame GetKeyFrame(int frame)
             {
-                CurrentFrame = KeyFrames.Find(x => x.Frame == frame);
+                CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frame);
                 if (CurrentFrame == null) { return CurrentFrame; }
 
                 LastKeyFrame = CurrentFrame;
@@ -80,8 +80,8 @@ namespace UnityVMDReader
                     LastRotationKeyFrame = CurrentFrame;
                 }
 
-                NextPositionKeyFrame = KeyFrames.Find(x => x.Frame > frame && x.Position != Vector3.zero);
-                NextRotationKeyFrame = KeyFrames.Find(x => x.Frame > frame && x.Rotation != ZeroQuaternion);
+                NextPositionKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Position != Vector3.zero);
+                NextRotationKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Rotation != ZeroQuaternion);
 
                 Interpolation = CurrentFrame.BoneInterpolation;
 
@@ -90,19 +90,19 @@ namespace UnityVMDReader
 
             public VMD.BoneKeyFrame GetKeyFrameAsJump(int frame)
             {
-                CurrentFrame = KeyFrames.Find(x => x.Frame == frame);
+                CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frame);
 
                 //ToListゆるして
-                KeyFrames = KeyFrames.OrderByDescending(x => x.Frame).ToList();
-                LastPositionKeyFrame = KeyFrames.Find(x => x.Frame < frame && x.Position != Vector3.zero);
-                LastRotationKeyFrame = KeyFrames.Find(x => x.Frame < frame && x.Rotation != ZeroQuaternion);
+                BoneKeyFrames = BoneKeyFrames.OrderByDescending(x => x.Frame).ToList();
+                LastPositionKeyFrame = BoneKeyFrames.Find(x => x.Frame < frame && x.Position != Vector3.zero);
+                LastRotationKeyFrame = BoneKeyFrames.Find(x => x.Frame < frame && x.Rotation != ZeroQuaternion);
 
                 LastKeyFrame = LastPositionKeyFrame.Frame < LastRotationKeyFrame.Frame ? LastRotationKeyFrame : LastPositionKeyFrame;
 
                 //ToListゆるして
-                KeyFrames = KeyFrames.OrderBy(x => x.Frame).ToList();
-                NextPositionKeyFrame = KeyFrames.Find(x => x.Frame > frame && x.Position != Vector3.zero);
-                NextRotationKeyFrame = KeyFrames.Find(x => x.Frame > frame && x.Rotation != ZeroQuaternion);
+                BoneKeyFrames = BoneKeyFrames.OrderBy(x => x.Frame).ToList();
+                NextPositionKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Position != Vector3.zero);
+                NextRotationKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Rotation != ZeroQuaternion);
 
                 if (LastKeyFrame != null)
                 {
@@ -114,12 +114,12 @@ namespace UnityVMDReader
 
             public void AddFrame(VMD.BoneKeyFrame vmdBoneFrame)
             {
-                KeyFrames.Add(vmdBoneFrame);
+                BoneKeyFrames.Add(vmdBoneFrame);
             }
 
             public void OrderByFrame()
             {
-                KeyFrames = KeyFrames.OrderBy(x => x.Frame).ToList();
+                BoneKeyFrames = BoneKeyFrames.OrderBy(x => x.Frame).ToList();
             }
         }
 
@@ -132,7 +132,7 @@ namespace UnityVMDReader
 
         void InitializeBoneKeyFrameGroups()
         {
-            BoneKeyFrameGroups.Clear();
+            BoneKeyFrameGroups.Clear(); 
             for (int i = 0; i < BoneKeyFrameGroup.BoneStringNames.Count; i++)
             {
                 BoneKeyFrameGroups.Add(new BoneKeyFrameGroup((BoneKeyFrameGroup.BoneNames)i));
@@ -154,7 +154,7 @@ namespace UnityVMDReader
             RawVMD = new VMD(filePath);
 
             //人ボーンのキーフレームをグループごとに分けてBoneKeyFrameGroupsに入れる
-            InitializeBoneKeyFrameGroups();
+            BoneKeyFrameGroups.Clear();
             foreach (VMD.BoneKeyFrame boneKeyFrame in RawVMD.BoneKeyFrames)
             {
                 if (!BoneKeyFrameGroup.BoneStringNames.Contains(boneKeyFrame.Name)) { continue; }
@@ -164,8 +164,11 @@ namespace UnityVMDReader
             //いちおうフレームごとに並べておく
             BoneKeyFrameGroups.ForEach(x => x.OrderByFrame());
 
+            //人ボーンのフレームが見当たらなかったらこれ以上しない
+            if (BoneKeyFrameGroups.All(x => x.BoneKeyFrames.Count == 0)) { return; }
+
             //ついでに最終フレームも求めておく
-            FrameCount = BoneKeyFrameGroups.Where(x => x.KeyFrames.Count > 0).Max(x => x.KeyFrames.Last().Frame);
+            FrameCount = BoneKeyFrameGroups.Where(x => x.BoneKeyFrames.Count > 0).Max(x => x.BoneKeyFrames.Last().Frame);
         }
     }
 
