@@ -249,7 +249,7 @@ public class VMDController : MonoBehaviour
     {
         void animateParentOfAll(float amp = ParentAmplifier)
         {
-            VMD.BoneKeyFrame parentBoneFrame = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親].GetKeyFrame(frameNumber);
+            VMD.BoneKeyFrame parentBoneFrame = vmdReader.GetBoneKeyFrame(VMDReader.BoneKeyFrameGroup.BoneNames.全ての親, frameNumber);
             if (parentBoneFrame == null) { parentBoneFrame = new VMD.BoneKeyFrame(); }
             if (parentBoneFrame.Position != Vector3.zero)
             {
@@ -265,7 +265,7 @@ public class VMDController : MonoBehaviour
         {
             Transform boneTransform = boneTransformDictionary[boneName].Item1;
             if (boneTransform == null) { return; }
-            VMD.BoneKeyFrame vmdBoneFrame = vmdReader.BoneKeyFrameGroups[(int)boneName].GetKeyFrame(frameNumber);
+            VMD.BoneKeyFrame vmdBoneFrame = vmdReader.GetBoneKeyFrame(boneName, frameNumber);
             if (vmdBoneFrame == null) { return; }
 
             if (vmdBoneFrame.Position != Vector3.zero)
@@ -289,7 +289,7 @@ public class VMDController : MonoBehaviour
     {
         void animateParentOfAll(float amp = ParentAmplifier)
         {
-            VMD.BoneKeyFrame parentBoneFrame = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親].GetKeyFrameAsJump(frameNumber);
+            VMD.BoneKeyFrame parentBoneFrame = vmdReader.GetBoneKeyFrame(VMDReader.BoneKeyFrameGroup.BoneNames.全ての親, frameNumber);
             if (parentBoneFrame == null) { parentBoneFrame = new VMD.BoneKeyFrame(); }
             if (parentBoneFrame.Position != Vector3.zero)
             {
@@ -305,7 +305,7 @@ public class VMDController : MonoBehaviour
         {
             Transform boneTransform = boneTransformDictionary[boneName].Item1;
             if (boneTransform == null) { return; }
-            VMD.BoneKeyFrame vmdBoneFrame = vmdReader.BoneKeyFrameGroups[(int)boneName].GetKeyFrameAsJump(frameNumber);
+            VMD.BoneKeyFrame vmdBoneFrame = vmdReader.GetBoneKeyFrame(boneName, frameNumber);
             if (vmdBoneFrame == null) { return; }
 
             if (vmdBoneFrame.Position != Vector3.zero)
@@ -329,11 +329,11 @@ public class VMDController : MonoBehaviour
     {
         void interpolateParentOfAll(float amp = ParentAmplifier)
         {
-            VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親];
-            VMD.BoneKeyFrame lastPositionVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親].LastPositionKeyFrame;
-            VMD.BoneKeyFrame lastRotationVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親].LastRotationKeyFrame;
-            VMD.BoneKeyFrame nextPositionVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親].NextPositionKeyFrame;
-            VMD.BoneKeyFrame nextRotationVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)VMDReader.BoneKeyFrameGroup.BoneNames.全ての親].NextRotationKeyFrame;
+            VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = vmdReader.GetBoneKeyFrameGroup(VMDReader.BoneKeyFrameGroup.BoneNames.全ての親);
+            VMD.BoneKeyFrame lastPositionVMDBoneFrame = vmdBoneFrameGroup.LastPositionKeyFrame;
+            VMD.BoneKeyFrame lastRotationVMDBoneFrame = vmdBoneFrameGroup.LastRotationKeyFrame;
+            VMD.BoneKeyFrame nextPositionVMDBoneFrame = vmdBoneFrameGroup.NextPositionKeyFrame;
+            VMD.BoneKeyFrame nextRotationVMDBoneFrame = vmdBoneFrameGroup.NextRotationKeyFrame;
 
             if (nextPositionVMDBoneFrame != null && lastPositionVMDBoneFrame != null)
             {
@@ -358,19 +358,19 @@ public class VMDController : MonoBehaviour
         {
             Transform boneTransform = boneTransformDictionary[boneName].Item1;
 
-            VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = vmdReader.BoneKeyFrameGroups[(int)boneName];
-            VMD.BoneKeyFrame lastPositionVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)boneName].LastPositionKeyFrame;
-            VMD.BoneKeyFrame lastRotationVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)boneName].LastRotationKeyFrame;
-            VMD.BoneKeyFrame nextPositionVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)boneName].NextPositionKeyFrame;
-            VMD.BoneKeyFrame nextRotationVMDBoneFrame = vmdReader.BoneKeyFrameGroups[(int)boneName].NextRotationKeyFrame;
+            VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = vmdReader.GetBoneKeyFrameGroup(boneName);
+            VMD.BoneKeyFrame lastPositionVMDBoneFrame = vmdBoneFrameGroup.LastPositionKeyFrame;
+            VMD.BoneKeyFrame lastRotationVMDBoneFrame = vmdBoneFrameGroup.LastRotationKeyFrame;
+            VMD.BoneKeyFrame nextPositionVMDBoneFrame = vmdBoneFrameGroup.NextPositionKeyFrame;
+            VMD.BoneKeyFrame nextRotationVMDBoneFrame = vmdBoneFrameGroup.NextRotationKeyFrame;
 
             if (boneTransform == null) { return; }
 
             if (nextPositionVMDBoneFrame != null && lastPositionVMDBoneFrame != null)
             {
-                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
-                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
-                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
+                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
+                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
+                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
 
                 float xInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
                 float yInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
@@ -380,7 +380,7 @@ public class VMDController : MonoBehaviour
 
             if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
             {
-                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, vmdBoneFrameGroup.LastRotationKeyFrame.Frame, vmdBoneFrameGroup.NextRotationKeyFrame.Frame);
+                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, lastRotationVMDBoneFrame.Frame, nextRotationVMDBoneFrame.Frame);
                 boneTransform.localRotation = Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate);
             }
         }
@@ -420,8 +420,8 @@ public class VMDController : MonoBehaviour
         {
             //InterpolateIK(frame)でSetIKEnableを呼び出すため、ここではSetIKEnableを呼び出さない
 
-            VMD.BoneKeyFrame centerBoneFrame = VMDReader.BoneKeyFrameGroups[(int)centerBoneName].GetKeyFrame(frame);
-            VMD.BoneKeyFrame grooveBoneFrame = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName].GetKeyFrame(frame);
+            VMD.BoneKeyFrame centerBoneFrame = VMDReader.GetBoneKeyFrame(centerBoneName, frame);
+            VMD.BoneKeyFrame grooveBoneFrame = VMDReader.GetBoneKeyFrame(grooveBoneName, frame);
 
             InterpolateIK(frame);
         }
@@ -430,8 +430,8 @@ public class VMDController : MonoBehaviour
         {
             //InterpolateIK(frame)でSetIKEnableを呼び出すため、ここではSetIKEnableを呼び出さない
 
-            VMD.BoneKeyFrame centerBoneFrame = VMDReader.BoneKeyFrameGroups[(int)centerBoneName].GetKeyFrameAsJump(frame);
-            VMD.BoneKeyFrame grooveBoneFrame = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName].GetKeyFrameAsJump(frame);
+            VMD.BoneKeyFrame centerBoneFrame = VMDReader.GetBoneKeyFrame(centerBoneName, frame);
+            VMD.BoneKeyFrame grooveBoneFrame = VMDReader.GetBoneKeyFrame(grooveBoneName, frame);
 
             InterpolateIK(frame);
         }
@@ -443,18 +443,18 @@ public class VMDController : MonoBehaviour
             if (!Enable) { return; }
 
 
-            VMDReader.BoneKeyFrameGroup centerVMDBoneFrameGroup = VMDReader.BoneKeyFrameGroups[(int)centerBoneName];
-            VMDReader.BoneKeyFrameGroup grooveVMDBoneFrameGroup = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName];
+            VMDReader.BoneKeyFrameGroup centerVMDBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(centerBoneName);
+            VMDReader.BoneKeyFrameGroup grooveVMDBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(grooveBoneName);
 
-            VMD.BoneKeyFrame centerLastPositionVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)centerBoneName].LastPositionKeyFrame;
-            VMD.BoneKeyFrame centerLastRotationVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)centerBoneName].LastRotationKeyFrame;
-            VMD.BoneKeyFrame centerNextPositionVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)centerBoneName].NextPositionKeyFrame;
-            VMD.BoneKeyFrame centerNextRotationVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)centerBoneName].NextRotationKeyFrame;
+            VMD.BoneKeyFrame centerLastPositionVMDBoneFrame = centerVMDBoneFrameGroup.LastPositionKeyFrame;
+            VMD.BoneKeyFrame centerLastRotationVMDBoneFrame = centerVMDBoneFrameGroup.LastRotationKeyFrame;
+            VMD.BoneKeyFrame centerNextPositionVMDBoneFrame = centerVMDBoneFrameGroup.NextPositionKeyFrame;
+            VMD.BoneKeyFrame centerNextRotationVMDBoneFrame = centerVMDBoneFrameGroup.NextRotationKeyFrame;
 
-            VMD.BoneKeyFrame grooveLastPositionVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName].LastPositionKeyFrame;
-            VMD.BoneKeyFrame grooveLastRotationVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName].LastRotationKeyFrame;
-            VMD.BoneKeyFrame grooveNextPositionVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName].NextPositionKeyFrame;
-            VMD.BoneKeyFrame grooveNextRotationVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)grooveBoneName].NextRotationKeyFrame;
+            VMD.BoneKeyFrame grooveLastPositionVMDBoneFrame = grooveVMDBoneFrameGroup.LastPositionKeyFrame;
+            VMD.BoneKeyFrame grooveLastRotationVMDBoneFrame = grooveVMDBoneFrameGroup.LastRotationKeyFrame;
+            VMD.BoneKeyFrame grooveNextPositionVMDBoneFrame = grooveVMDBoneFrameGroup.NextPositionKeyFrame;
+            VMD.BoneKeyFrame grooveNextRotationVMDBoneFrame = grooveVMDBoneFrameGroup.NextRotationKeyFrame;
 
             if (centerNextPositionVMDBoneFrame != null && centerLastPositionVMDBoneFrame != null)
             {
@@ -614,7 +614,7 @@ public class VMDController : MonoBehaviour
 
             if (!Enable) { return; }
 
-            VMD.BoneKeyFrame footIKFrame = VMDReader.BoneKeyFrameGroups[(int)boneName].GetKeyFrame(frame);
+            VMD.BoneKeyFrame footIKFrame = VMDReader.GetBoneKeyFrame(boneName, frame);
 
             if (footIKFrame == null || footIKFrame.Position == Vector3.zero) { return; }
 
@@ -629,7 +629,7 @@ public class VMDController : MonoBehaviour
 
             if (!Enable) { return; }
 
-            VMD.BoneKeyFrame footIKFrame = VMDReader.BoneKeyFrameGroups[(int)boneName].GetKeyFrameAsJump(frame);
+            VMD.BoneKeyFrame footIKFrame = VMDReader.GetBoneKeyFrame(boneName, frame);
 
             if (footIKFrame == null || footIKFrame.Position == Vector3.zero) { return; }
 
@@ -644,17 +644,17 @@ public class VMDController : MonoBehaviour
 
             if (!Enable) { return; }
 
-            VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = VMDReader.BoneKeyFrameGroups[(int)boneName];
-            VMD.BoneKeyFrame lastPositionVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)boneName].LastPositionKeyFrame;
-            VMD.BoneKeyFrame lastRotationVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)boneName].LastRotationKeyFrame;
-            VMD.BoneKeyFrame nextPositionVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)boneName].NextPositionKeyFrame;
-            VMD.BoneKeyFrame nextRotationVMDBoneFrame = VMDReader.BoneKeyFrameGroups[(int)boneName].NextRotationKeyFrame;
+            VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(boneName);
+            VMD.BoneKeyFrame lastPositionVMDBoneFrame = vmdBoneFrameGroup.LastPositionKeyFrame;
+            VMD.BoneKeyFrame lastRotationVMDBoneFrame = vmdBoneFrameGroup.LastRotationKeyFrame;
+            VMD.BoneKeyFrame nextPositionVMDBoneFrame = vmdBoneFrameGroup.NextPositionKeyFrame;
+            VMD.BoneKeyFrame nextRotationVMDBoneFrame = vmdBoneFrameGroup.NextRotationKeyFrame;
 
             if (nextPositionVMDBoneFrame != null && lastPositionVMDBoneFrame != null)
             {
-                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
-                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
-                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
+                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
+                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
+                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
 
                 float xInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
                 float yInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
