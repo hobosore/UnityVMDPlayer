@@ -129,7 +129,6 @@ namespace UnityVMDReader
             RawVMD = new VMD(filePath);
 
             //人ボーンのキーフレームをグループごとに分けてBoneKeyFrameGroupsに入れる
-            BoneKeyFrameGroups.Clear();
             foreach (VMD.BoneKeyFrame boneKeyFrame in RawVMD.BoneKeyFrames)
             {
                 if (!BoneKeyFrameGroup.BoneStringNames.Contains(boneKeyFrame.Name)) { continue; }
