@@ -62,46 +62,20 @@ namespace UnityVMDReader
 
             public VMD.BoneKeyFrame GetKeyFrame(int frame)
             {
-                CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frame);
-                if (CurrentFrame == null) { return CurrentFrame; }
+                CurrentFrame = BoneKeyFrames.FindAll(x => x.Frame == frame);
 
-                LastKeyFrame = CurrentFrame;
-
-                if (CurrentFrame.Position != Vector3.zero)
-                {
-                    LastPositionKeyFrame = CurrentFrame;
-                }
-
-                if (CurrentFrame.Rotation != ZeroQuaternion)
-                {
-                    LastRotationKeyFrame = CurrentFrame;
-                }
-
+                LastPositionKeyFrame = BoneKeyFrames.FindLast(x => x.Frame < frame && x.Position != Vector3.zero);
+                LastRotationKeyFrame = BoneKeyFrames.FindLast(x => x.Frame < frame && x.Rotation != ZeroQuaternion);
                 NextPositionKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Position != Vector3.zero);
                 NextRotationKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Rotation != ZeroQuaternion);
-
-                Interpolation = CurrentFrame.BoneInterpolation;
-
-                return CurrentFrame;
-            }
-
-            public VMD.BoneKeyFrame GetKeyFrameAsJump(int frame)
-            {
-                CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frame);
-
-                //ToListゆるして
-                BoneKeyFrames = BoneKeyFrames.OrderByDescending(x => x.Frame).ToList();
-                LastPositionKeyFrame = BoneKeyFrames.Find(x => x.Frame < frame && x.Position != Vector3.zero);
-                LastRotationKeyFrame = BoneKeyFrames.Find(x => x.Frame < frame && x.Rotation != ZeroQuaternion);
 
                 LastKeyFrame = LastPositionKeyFrame.Frame < LastRotationKeyFrame.Frame ? LastRotationKeyFrame : LastPositionKeyFrame;
 
-                //ToListゆるして
-                BoneKeyFrames = BoneKeyFrames.OrderBy(x => x.Frame).ToList();
-                NextPositionKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Position != Vector3.zero);
-                NextRotationKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Rotation != ZeroQuaternion);
-
-                if (LastKeyFrame != null)
+                if (CurrentFrame != null)
+                {
+                    Interpolation = CurrentFrame.BoneInterpolation;
+                }
+                else if (LastKeyFrame != null)
                 {
                     Interpolation = LastKeyFrame.BoneInterpolation;
                 }
