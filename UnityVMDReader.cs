@@ -79,6 +79,10 @@ namespace UnityVMDReader
                 {
                     Interpolation = LastKeyFrame.BoneInterpolation;
                 }
+                else
+                {
+                    Interpolation = null;
+                }
 
                 return CurrentFrame;
             }
