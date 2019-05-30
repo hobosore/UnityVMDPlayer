@@ -79,7 +79,7 @@ namespace UnityVMDReader
                 return GetKeyFrameWithoutCash(frameNumber);
             }
 
-            public VMD.BoneKeyFrame GetKeyFrameUsingCash(int frameNumber)
+            private VMD.BoneKeyFrame GetKeyFrameUsingCash(int frameNumber)
             {
                 CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frameNumber);
 
@@ -127,7 +127,7 @@ namespace UnityVMDReader
                 return CurrentFrame;
             }
 
-            public VMD.BoneKeyFrame GetKeyFrameWithoutCash(int frameNumber)
+            private VMD.BoneKeyFrame GetKeyFrameWithoutCash(int frameNumber)
             {
                 CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frameNumber);
 
