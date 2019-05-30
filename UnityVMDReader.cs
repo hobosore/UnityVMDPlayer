@@ -69,7 +69,22 @@ namespace UnityVMDReader
                 NextPositionKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Position != Vector3.zero);
                 NextRotationKeyFrame = BoneKeyFrames.Find(x => x.Frame > frame && x.Rotation != ZeroQuaternion);
 
-                LastKeyFrame = LastPositionKeyFrame.Frame < LastRotationKeyFrame.Frame ? LastRotationKeyFrame : LastPositionKeyFrame;
+                if (LastPositionKeyFrame == null && LastRotationKeyFrame == null)
+                {
+                    LastKeyFrame = CurrentFrame;
+                }
+                else if (LastPositionKeyFrame == null)
+                {
+                    LastKeyFrame = LastRotationKeyFrame;
+                }
+                else if (LastRotationKeyFrame == null)
+                {
+                    LastKeyFrame = LastPositionKeyFrame;
+                }
+                else 
+                {
+                    LastKeyFrame = LastPositionKeyFrame.Frame < LastRotationKeyFrame.Frame ? LastRotationKeyFrame : LastPositionKeyFrame;
+                }
 
                 if (CurrentFrame != null)
                 {
