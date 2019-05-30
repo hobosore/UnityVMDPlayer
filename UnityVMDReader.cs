@@ -62,7 +62,7 @@ namespace UnityVMDReader
 
             public VMD.BoneKeyFrame GetKeyFrame(int frame)
             {
-                CurrentFrame = BoneKeyFrames.FindAll(x => x.Frame == frame);
+                CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frame);
 
                 LastPositionKeyFrame = BoneKeyFrames.FindLast(x => x.Frame < frame && x.Position != Vector3.zero);
                 LastRotationKeyFrame = BoneKeyFrames.FindLast(x => x.Frame < frame && x.Rotation != ZeroQuaternion);
