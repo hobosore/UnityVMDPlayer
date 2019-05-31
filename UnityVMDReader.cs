@@ -169,7 +169,7 @@ namespace UnityVMDReader
                 return CurrentKeyFrame;
             }
 
-            public void AddFrame(VMD.BoneKeyFrame vmdBoneFrame)
+            public void AddKeyFrame(VMD.BoneKeyFrame vmdBoneFrame)
             {
                 BoneKeyFrames.Add(vmdBoneFrame);
                 if (vmdBoneFrame.Position != Vector3.zero) { BonePositionKeyFrames.Add(vmdBoneFrame); }
@@ -217,7 +217,7 @@ namespace UnityVMDReader
             foreach (VMD.BoneKeyFrame boneKeyFrame in RawVMD.BoneKeyFrames)
             {
                 if (!BoneKeyFrameGroup.BoneStringNames.Contains(boneKeyFrame.Name)) { continue; }
-                BoneKeyFrameGroups[BoneKeyFrameGroup.BoneStringNames.IndexOf(boneKeyFrame.Name)].AddFrame(boneKeyFrame);
+                BoneKeyFrameGroups[BoneKeyFrameGroup.BoneStringNames.IndexOf(boneKeyFrame.Name)].AddKeyFrame(boneKeyFrame);
             }
 
             //いちおうフレームごとに並べておく
