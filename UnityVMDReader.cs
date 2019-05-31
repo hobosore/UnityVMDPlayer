@@ -54,7 +54,7 @@ namespace UnityVMDReader
 
             int frameNumberCash = -1;
 
-            public VMD.BoneKeyFrame CurrentFrame { get; private set; }
+            public VMD.BoneKeyFrame CurrentKeyFrame { get; private set; }
             public VMD.BoneKeyFrame.Interpolation Interpolation { get; private set; }
             public VMD.BoneKeyFrame LastKeyFrame { get; private set; }
             public VMD.BoneKeyFrame LastPositionKeyFrame { get; private set; }
@@ -81,22 +81,22 @@ namespace UnityVMDReader
 
             private VMD.BoneKeyFrame GetKeyFrameUsingCash(int frameNumber)
             {
-                CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frameNumber);
+                CurrentKeyFrame = BoneKeyFrames.Find(x => x.Frame == frameNumber);
 
-                if (CurrentFrame.Position != Vector3.zero)
+                if (CurrentKeyFrame.Position != Vector3.zero)
                 {
-                    LastPositionKeyFrame = CurrentFrame;
+                    LastPositionKeyFrame = CurrentKeyFrame;
                     NextPositionKeyFrame = BonePositionKeyFrames.Find(x => x.Frame > frameNumber);
                 }
-                if (CurrentFrame.Rotation != ZeroQuaternion)
+                if (CurrentKeyFrame.Rotation != ZeroQuaternion)
                 {
-                    LastRotationKeyFrame = CurrentFrame;
+                    LastRotationKeyFrame = CurrentKeyFrame;
                     NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.Frame > frameNumber);
                 }
 
                 if (LastPositionKeyFrame == null && LastRotationKeyFrame == null)
                 {
-                    LastKeyFrame = CurrentFrame;
+                    LastKeyFrame = CurrentKeyFrame;
                 }
                 else if (LastPositionKeyFrame == null)
                 {
@@ -111,9 +111,9 @@ namespace UnityVMDReader
                     LastKeyFrame = LastPositionKeyFrame.Frame < LastRotationKeyFrame.Frame ? LastRotationKeyFrame : LastPositionKeyFrame;
                 }
 
-                if (CurrentFrame != null)
+                if (CurrentKeyFrame != null)
                 {
-                    Interpolation = CurrentFrame.BoneInterpolation;
+                    Interpolation = CurrentKeyFrame.BoneInterpolation;
                 }
                 else if (LastKeyFrame != null)
                 {
@@ -124,12 +124,12 @@ namespace UnityVMDReader
                     Interpolation = null;
                 }
 
-                return CurrentFrame;
+                return CurrentKeyFrame;
             }
 
             private VMD.BoneKeyFrame GetKeyFrameWithoutCash(int frameNumber)
             {
-                CurrentFrame = BoneKeyFrames.Find(x => x.Frame == frameNumber);
+                CurrentKeyFrame = BoneKeyFrames.Find(x => x.Frame == frameNumber);
 
                 LastPositionKeyFrame = BonePositionKeyFrames.FindLast(x => x.Frame <= frameNumber);
                 LastRotationKeyFrame = BoneRotationKeyFrames.FindLast(x => x.Frame <= frameNumber);
@@ -138,7 +138,7 @@ namespace UnityVMDReader
 
                 if (LastPositionKeyFrame == null && LastRotationKeyFrame == null)
                 {
-                    LastKeyFrame = CurrentFrame;
+                    LastKeyFrame = CurrentKeyFrame;
                 }
                 else if (LastPositionKeyFrame == null)
                 {
@@ -153,9 +153,9 @@ namespace UnityVMDReader
                     LastKeyFrame = LastPositionKeyFrame.Frame < LastRotationKeyFrame.Frame ? LastRotationKeyFrame : LastPositionKeyFrame;
                 }
 
-                if (CurrentFrame != null)
+                if (CurrentKeyFrame != null)
                 {
-                    Interpolation = CurrentFrame.BoneInterpolation;
+                    Interpolation = CurrentKeyFrame.BoneInterpolation;
                 }
                 else if (LastKeyFrame != null)
                 {
@@ -166,7 +166,7 @@ namespace UnityVMDReader
                     Interpolation = null;
                 }
 
-                return CurrentFrame;
+                return CurrentKeyFrame;
             }
 
             public void AddFrame(VMD.BoneKeyFrame vmdBoneFrame)
