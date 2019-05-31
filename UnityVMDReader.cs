@@ -47,9 +47,9 @@ namespace UnityVMDReader
 
             //全てのBoneKeyFrames
             public List<VMD.BoneKeyFrame> BoneKeyFrames = new List<VMD.BoneKeyFrame>();
-            //Positionデータを保持したBoneKeyFramesのディクショナリ
+            //Positionデータを保持したBoneKeyFramesのリスト
             public List<VMD.BoneKeyFrame> BonePositionKeyFrames = new List<VMD.BoneKeyFrame>();
-            //Rotationデータを保持したBoneKeyFramesのディクショナリ
+            //Rotationデータを保持したBoneKeyFramesのリスト
             public List<VMD.BoneKeyFrame> BoneRotationKeyFrames = new List<VMD.BoneKeyFrame>();
 
             int frameNumberCash = -1;
