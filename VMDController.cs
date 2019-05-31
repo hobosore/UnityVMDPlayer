@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
@@ -18,7 +18,7 @@ public class VMDController : MonoBehaviour
     //全ての親はデフォルトでオフ
     public bool UseParentOfAll = false;
     public bool UseCenterIK = true;
-    //30fps、垂直同期は切らないと重い
+    //30fps、垂直同期は切らないと重い?
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
     const float FPSs = 0.03333f;
     //ボーン移動量の補正係数
@@ -161,6 +161,11 @@ public class VMDController : MonoBehaviour
         Transform rightFoot = Animator.GetBoneTransform(HumanBodyBones.RightFoot);
         Gizmos.DrawWireSphere(leftFoot.position + leftFoot.rotation * LeftFootOffset, 0.1f);
         Gizmos.DrawWireSphere(rightFoot.position + rightFoot.rotation * RightFootOffset, 0.1f);
+    }
+
+    public void SetFPS(int fps)
+    {
+        Time.fixedDeltaTime = fps;
     }
 
     public void Stop()
