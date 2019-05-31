@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
@@ -236,7 +236,7 @@ public class VMDController : MonoBehaviour
     public void JumpToFrame(int frameNumber)
     {
         this.frameNumber = frameNumber;
-        AnimateAsJump(frameNumber);
+        Animate(frameNumber);
         Interpolate(frameNumber);
     }
     
@@ -283,46 +283,6 @@ public class VMDController : MonoBehaviour
         if (UseCenterIK && centerIK != null) { centerIK.IK(frameNumber); }
         if (leftFootIK != null) { leftFootIK.IK(frameNumber); }
         if (rightFootIK != null) { rightFootIK.IK(frameNumber); }
-    }
-
-    void AnimateAsJump(int frameNumber)
-    {
-        void animateParentOfAll(float amp = ParentAmplifier)
-        {
-            VMD.BoneKeyFrame parentBoneFrame = vmdReader.GetBoneKeyFrame(VMDReader.BoneKeyFrameGroup.BoneNames.全ての親, frameNumber);
-            if (parentBoneFrame == null) { parentBoneFrame = new VMD.BoneKeyFrame(); }
-            if (parentBoneFrame.Position != Vector3.zero)
-            {
-                transform.localPosition = originalParentLocalPosition + parentBoneFrame.Position * amp;
-            }
-            if (parentBoneFrame.Rotation != ZeroQuaternion)
-            {
-                transform.localRotation = originalParentLocalRotation.PlusRotation(parentBoneFrame.Rotation);
-            }
-        }
-
-        void animateBone(VMDReader.BoneKeyFrameGroup.BoneNames boneName)
-        {
-            Transform boneTransform = boneTransformDictionary[boneName].Item1;
-            if (boneTransform == null) { return; }
-            VMD.BoneKeyFrame vmdBoneFrame = vmdReader.GetBoneKeyFrame(boneName, frameNumber);
-            if (vmdBoneFrame == null) { return; }
-
-            if (vmdBoneFrame.Position != Vector3.zero)
-            {
-                boneTransform.localPosition = originalBonePositions[boneName] + vmdBoneFrame.Position * boneTransformDictionary[boneName].Item2;
-            }
-            if (vmdBoneFrame.Rotation != ZeroQuaternion)
-            {
-                boneTransform.localRotation = vmdBoneFrame.Rotation;
-            }
-        }
-
-        if (UseParentOfAll) { animateParentOfAll(); }
-        foreach (VMDReader.BoneKeyFrameGroup.BoneNames boneName in boneTransformDictionary.Keys) { animateBone(boneName); }
-        if (UseCenterIK && centerIK != null) { centerIK.IKAsJump(frameNumber); }
-        if (leftFootIK != null) { leftFootIK.IKAsJump(frameNumber); }
-        if (rightFootIK != null) { rightFootIK.IKAsJump(frameNumber); }
     }
 
     void Interpolate(int frameNumber)
@@ -417,16 +377,6 @@ public class VMDController : MonoBehaviour
         }
 
         public void IK(int frame)
-        {
-            //InterpolateIK(frame)でSetIKEnableを呼び出すため、ここではSetIKEnableを呼び出さない
-
-            VMD.BoneKeyFrame centerBoneFrame = VMDReader.GetBoneKeyFrame(centerBoneName, frame);
-            VMD.BoneKeyFrame grooveBoneFrame = VMDReader.GetBoneKeyFrame(grooveBoneName, frame);
-
-            InterpolateIK(frame);
-        }
-
-        public void IKAsJump(int frame)
         {
             //InterpolateIK(frame)でSetIKEnableを呼び出すため、ここではSetIKEnableを呼び出さない
 
@@ -609,21 +559,6 @@ public class VMDController : MonoBehaviour
             KneeTransform.RotateAround(KneeTransform.position, HipTransform.right, kneeAngle);
         }
         public void IK(int frame)
-        {
-            SetIKEnable(frame);
-
-            if (!Enable) { return; }
-
-            VMD.BoneKeyFrame footIKFrame = VMDReader.GetBoneKeyFrame(boneName, frame);
-
-            if (footIKFrame == null || footIKFrame.Position == Vector3.zero) { return; }
-
-            Target.localPosition = firstLocalPosition + footIKFrame.Position * FootIKAmplifier + FootTransform.localRotation * Offset;
-
-            IK();
-        }
-
-        public void IKAsJump(int frame)
         {
             SetIKEnable(frame);
 
