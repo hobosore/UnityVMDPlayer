@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
@@ -34,6 +34,7 @@ public class VMDController : MonoBehaviour
     //モデルの初期ポーズを保存
     Dictionary<VMDReader.BoneKeyFrameGroup.BoneNames, (Transform, float)> boneTransformDictionary;
     Dictionary<VMDReader.BoneKeyFrameGroup.BoneNames, Vector3> originalBonePositions;
+    Dictionary<VMDReader.BoneKeyFrameGroup.BoneNames, Quaternion> originalBoneRotations;
 
     //以下はPlay時に初期化
     int startedTime;
@@ -115,13 +116,14 @@ public class VMDController : MonoBehaviour
 
         //モデルの初期ポーズを保存
         originalBonePositions = new Dictionary<VMDReader.BoneKeyFrameGroup.BoneNames, Vector3>();
+        originalBoneRotations = new Dictionary<VMDReader.BoneKeyFrameGroup.BoneNames, Quaternion>();
         int count = VMDReader.BoneKeyFrameGroup.BoneStringNames.Count;
-        //LastBoneを除くためcount-1
-        for (int i = 0; i < count - 1; i++)
+        for (int i = 0; i < count; i++)
         {
             VMDReader.BoneKeyFrameGroup.BoneNames boneName = (VMDReader.BoneKeyFrameGroup.BoneNames)VMDReader.BoneKeyFrameGroup.BoneStringNames.IndexOf(VMDReader.BoneKeyFrameGroup.BoneStringNames[i]);
             if (!boneTransformDictionary.Keys.Contains(boneName) || boneTransformDictionary[boneName].Item1 == null) { continue; }
             originalBonePositions.Add(boneName, boneTransformDictionary[boneName].Item1.localPosition);
+            originalBoneRotations.Add(boneName, boneTransformDictionary[boneName].Item1.localRotation);
         }
     }
 
@@ -244,12 +246,12 @@ public class VMDController : MonoBehaviour
         Animate(frameNumber);
         Interpolate(frameNumber);
     }
-    
+
     public void Pause()
     {
         IsPlaying = false;
     }
-    
+
     void Animate(int frameNumber)
     {
         void animateParentOfAll(float amp = ParentAmplifier)
@@ -279,7 +281,7 @@ public class VMDController : MonoBehaviour
             }
             if (vmdBoneFrame.Rotation != ZeroQuaternion)
             {
-                boneTransform.localRotation = vmdBoneFrame.Rotation;
+                boneTransform.localRotation = originalBoneRotations[boneName].PlusRotation(vmdBoneFrame.Rotation);
             }
         }
 
@@ -315,7 +317,7 @@ public class VMDController : MonoBehaviour
             if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
             {
                 float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, vmdBoneFrameGroup.LastRotationKeyFrame.Frame, vmdBoneFrameGroup.NextRotationKeyFrame.Frame);
-                transform.localRotation = Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate);
+                transform.localRotation = originalParentLocalRotation.PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
             }
         }
 
@@ -346,7 +348,7 @@ public class VMDController : MonoBehaviour
             if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
             {
                 float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, lastRotationVMDBoneFrame.Frame, nextRotationVMDBoneFrame.Frame);
-                boneTransform.localRotation = Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate);
+                boneTransform.localRotation = originalBoneRotations[boneName].PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
             }
         }
 
