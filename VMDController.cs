@@ -18,7 +18,7 @@ public class VMDController : MonoBehaviour
     //全ての親はデフォルトでオフ
     public bool UseParentOfAll = false;
     public bool UseCenterIK = true;
-    //30fps、垂直同期は切らないと重い?
+    //デフォルトは30fps、垂直同期は切らないと重い?
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
     const float FPSs = 0.03333f;
     //ボーン移動量の補正係数
