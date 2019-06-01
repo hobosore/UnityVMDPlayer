@@ -165,7 +165,7 @@ public class VMDController : MonoBehaviour
 
     public void SetFPS(int fps)
     {
-        Time.fixedDeltaTime = fps;
+        Time.fixedDeltaTime = 1 / (float)fps;
     }
 
     public void Stop()
