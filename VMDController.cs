@@ -18,15 +18,16 @@ public class VMDController : MonoBehaviour
     //全ての親はデフォルトでオフ
     public bool UseParentOfAll = false;
     public bool UseCenterIK = true;
+    public bool UseFootIK = true;
     //デフォルトは30fps、垂直同期は切らないと重い?
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
     const float FPSs = 0.03333f;
     //ボーン移動量の補正係数
     //この値は大体の値、改良の余地あり
-    const float DefaultBoneAmplifier = 0.1f;
-    const float ParentAmplifier = 0.1f;
-    const float CenterIKAmplifier = 0.1f;
-    const float FootIKAmplifier = 0.1f;
+    const float DefaultBoneAmplifier = 0.005f;
+    const float ParentAmplifier = 0.05f;
+    const float CenterIKAmplifier = 0.05f;
+    const float FootIKAmplifier = 0.05f;
 
     //以下はStart時に初期化
     //animatorはPlay時にも一応初期化
@@ -49,8 +50,8 @@ public class VMDController : MonoBehaviour
     public Transform LeftUpperArmTwist;
     public Transform RightUpperArmTwist;
     //VMDファイルのパスを与えて再生するまでオフセットは更新されない
-    public Vector3 LeftFootOffset = new Vector3(-0.15f, 0.6f, 0);
-    public Vector3 RightFootOffset = new Vector3(0.15f, 0.6f, 0);
+    public Vector3 LeftFootOffset = new Vector3(-0.15f, -0.6f, 0);
+    public Vector3 RightFootOffset = new Vector3(0.15f, -0.6f, 0);
 
     // Start is called before the first frame update
     void Start()
@@ -61,27 +62,27 @@ public class VMDController : MonoBehaviour
 
         boneTransformDictionary = new Dictionary<VMDReader.BoneKeyFrameGroup.BoneNames, (Transform, float)>()
         {
-            { VMDReader.BoneKeyFrameGroup.BoneNames.下半身 , (Animator.GetBoneTransform(HumanBodyBones.Hips), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.左足 , (Animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.右足 , (Animator.GetBoneTransform(HumanBodyBones.RightUpperLeg), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.左ひざ , (Animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.右ひざ , (Animator.GetBoneTransform(HumanBodyBones.RightLowerLeg), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.左足首 , (Animator.GetBoneTransform(HumanBodyBones.LeftFoot), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.右足首 , (Animator.GetBoneTransform(HumanBodyBones.RightFoot), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.上半身 , (Animator.GetBoneTransform(HumanBodyBones.Spine), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.上半身2 , (Animator.GetBoneTransform(HumanBodyBones.Chest), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.頭 , (Animator.GetBoneTransform(HumanBodyBones.Head), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.首 , (Animator.GetBoneTransform(HumanBodyBones.Neck), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.左肩 , (Animator.GetBoneTransform(HumanBodyBones.LeftShoulder), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.右肩 , (Animator.GetBoneTransform(HumanBodyBones.RightShoulder), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.下半身 ,   (Animator.GetBoneTransform(HumanBodyBones.Hips), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.左足 ,     (Animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.右足 ,     (Animator.GetBoneTransform(HumanBodyBones.RightUpperLeg), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.左ひざ ,   (Animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.右ひざ ,   (Animator.GetBoneTransform(HumanBodyBones.RightLowerLeg), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.左足首 ,   (Animator.GetBoneTransform(HumanBodyBones.LeftFoot), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.右足首 ,   (Animator.GetBoneTransform(HumanBodyBones.RightFoot), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.上半身 ,   (Animator.GetBoneTransform(HumanBodyBones.Spine), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.上半身2 ,  (Animator.GetBoneTransform(HumanBodyBones.Chest), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.頭 ,       (Animator.GetBoneTransform(HumanBodyBones.Head), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.首 ,       (Animator.GetBoneTransform(HumanBodyBones.Neck), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.左肩 ,     (Animator.GetBoneTransform(HumanBodyBones.LeftShoulder), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.右肩 ,     (Animator.GetBoneTransform(HumanBodyBones.RightShoulder), DefaultBoneAmplifier) },
             { VMDReader.BoneKeyFrameGroup.BoneNames.左腕捩れ , (LeftUpperArmTwist, DefaultBoneAmplifier) },
             { VMDReader.BoneKeyFrameGroup.BoneNames.右腕捩れ , (RightUpperArmTwist, DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.左腕 , (Animator.GetBoneTransform(HumanBodyBones.LeftUpperArm), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.右腕 , (Animator.GetBoneTransform(HumanBodyBones.RightUpperArm), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.左ひじ , (Animator.GetBoneTransform(HumanBodyBones.LeftLowerArm), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.右ひじ , (Animator.GetBoneTransform(HumanBodyBones.RightLowerArm), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.左手首 , (Animator.GetBoneTransform(HumanBodyBones.LeftHand), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.右手首 , (Animator.GetBoneTransform(HumanBodyBones.RightHand), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.左腕 ,     (Animator.GetBoneTransform(HumanBodyBones.LeftUpperArm), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.右腕 ,     (Animator.GetBoneTransform(HumanBodyBones.RightUpperArm), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.左ひじ ,   (Animator.GetBoneTransform(HumanBodyBones.LeftLowerArm), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.右ひじ ,   (Animator.GetBoneTransform(HumanBodyBones.RightLowerArm), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.左手首 ,   (Animator.GetBoneTransform(HumanBodyBones.LeftHand), DefaultBoneAmplifier) },
+            { VMDReader.BoneKeyFrameGroup.BoneNames.右手首 ,   (Animator.GetBoneTransform(HumanBodyBones.RightHand), DefaultBoneAmplifier) },
             { VMDReader.BoneKeyFrameGroup.BoneNames.左つま先 , (Animator.GetBoneTransform(HumanBodyBones.LeftToes), DefaultBoneAmplifier) },
             { VMDReader.BoneKeyFrameGroup.BoneNames.右つま先 , (Animator.GetBoneTransform(HumanBodyBones.RightToes), DefaultBoneAmplifier) },
             { VMDReader.BoneKeyFrameGroup.BoneNames.左親指１ , (Animator.GetBoneTransform(HumanBodyBones.LeftThumbProximal), DefaultBoneAmplifier) },
@@ -161,8 +162,8 @@ public class VMDController : MonoBehaviour
         Animator = GetComponent<Animator>();
         Transform leftFoot = Animator.GetBoneTransform(HumanBodyBones.LeftFoot);
         Transform rightFoot = Animator.GetBoneTransform(HumanBodyBones.RightFoot);
-        Gizmos.DrawWireSphere(leftFoot.position + leftFoot.rotation * LeftFootOffset, 0.1f);
-        Gizmos.DrawWireSphere(rightFoot.position + rightFoot.rotation * RightFootOffset, 0.1f);
+        Gizmos.DrawWireSphere(leftFoot.position + leftFoot.rotation * new Vector3(LeftFootOffset.x, -LeftFootOffset.y, LeftFootOffset.z), 0.1f);
+        Gizmos.DrawWireSphere(rightFoot.position + rightFoot.rotation * new Vector3(RightFootOffset.x, -RightFootOffset.y, RightFootOffset.z), 0.1f);
     }
 
     public void SetFPS(int fps)
@@ -288,8 +289,8 @@ public class VMDController : MonoBehaviour
         if (UseParentOfAll) { animateParentOfAll(); }
         foreach (VMDReader.BoneKeyFrameGroup.BoneNames boneName in boneTransformDictionary.Keys) { animateBone(boneName); }
         if (UseCenterIK && centerIK != null) { centerIK.IK(frameNumber); }
-        if (leftFootIK != null) { leftFootIK.IK(frameNumber); }
-        if (rightFootIK != null) { rightFootIK.IK(frameNumber); }
+        if (leftFootIK != null && UseFootIK) { leftFootIK.IK(frameNumber); }
+        if (rightFootIK != null && UseFootIK) { rightFootIK.IK(frameNumber); }
     }
 
     void Interpolate(int frameNumber)
@@ -355,8 +356,8 @@ public class VMDController : MonoBehaviour
         if (UseParentOfAll) { interpolateParentOfAll(); }
         foreach (VMDReader.BoneKeyFrameGroup.BoneNames boneName in boneTransformDictionary.Keys) { interpolateBone(boneName); }
         if (UseCenterIK) { centerIK.InterpolateIK(frameNumber); }
-        leftFootIK.InterpolateIK(frameNumber);
-        rightFootIK.InterpolateIK(frameNumber);
+        if (leftFootIK != null && UseFootIK) { leftFootIK.InterpolateIK(frameNumber); }
+        if (rightFootIK != null && UseFootIK) { rightFootIK.InterpolateIK(frameNumber); }
     }
 
     //VMDではセンターはHipの差分のみの位置、回転情報を持つ
