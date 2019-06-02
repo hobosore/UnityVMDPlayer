@@ -69,11 +69,11 @@ namespace UnityVMDReader
 
             public VMD.BoneKeyFrame GetKeyFrame(int frameNumber)
             {
-                //if (frameNumber == frameNumberCash + 1)
-                //{
-                //    frameNumberCash = frameNumber;
-                //    return GetKeyFrameUsingCash(frameNumber);
-                //}
+                if (frameNumber == frameNumberCash + 1)
+                {
+                    frameNumberCash = frameNumber;
+                    return GetKeyFrameUsingCash(frameNumber);
+                }
 
                 frameNumberCash = frameNumber;
                 return GetKeyFrameWithoutCash(frameNumber);
