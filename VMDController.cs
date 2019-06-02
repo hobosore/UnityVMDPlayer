@@ -22,7 +22,7 @@ public class VMDController : MonoBehaviour
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
     const float FPSs = 0.03333f;
     //ボーン移動量の補正係数
-    //この値は経験で決めた大体の値、改良の余地あり
+    //この値は大体の値、改良の余地あり
     const float DefaultBoneAmplifier = 0.1f;
     const float ParentAmplifier = 0.1f;
     const float CenterIKAmplifier = 0.1f;
@@ -304,9 +304,9 @@ public class VMDController : MonoBehaviour
 
             if (nextPositionVMDBoneFrame != null && lastPositionVMDBoneFrame != null)
             {
-                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
-                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
-                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.Frame, vmdBoneFrameGroup.NextPositionKeyFrame.Frame);
+                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
 
                 float xInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
                 float yInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
@@ -316,7 +316,7 @@ public class VMDController : MonoBehaviour
 
             if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
             {
-                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, vmdBoneFrameGroup.LastRotationKeyFrame.Frame, vmdBoneFrameGroup.NextRotationKeyFrame.Frame);
+                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, vmdBoneFrameGroup.LastRotationKeyFrame.FrameNumber, vmdBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
                 transform.localRotation = originalParentLocalRotation.PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
             }
         }
@@ -335,9 +335,9 @@ public class VMDController : MonoBehaviour
 
             if (nextPositionVMDBoneFrame != null && lastPositionVMDBoneFrame != null)
             {
-                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
-                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
-                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
+                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, lastPositionVMDBoneFrame.FrameNumber, nextPositionVMDBoneFrame.FrameNumber);
+                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, lastPositionVMDBoneFrame.FrameNumber, nextPositionVMDBoneFrame.FrameNumber);
+                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, lastPositionVMDBoneFrame.FrameNumber, nextPositionVMDBoneFrame.FrameNumber);
 
                 float xInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
                 float yInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
@@ -347,7 +347,7 @@ public class VMDController : MonoBehaviour
 
             if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
             {
-                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, lastRotationVMDBoneFrame.Frame, nextRotationVMDBoneFrame.Frame);
+                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, lastRotationVMDBoneFrame.FrameNumber, nextRotationVMDBoneFrame.FrameNumber);
                 boneTransform.localRotation = originalBoneRotations[boneName].PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
             }
         }
@@ -415,9 +415,9 @@ public class VMDController : MonoBehaviour
 
             if (centerNextPositionVMDBoneFrame != null && centerLastPositionVMDBoneFrame != null)
             {
-                float xCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, centerVMDBoneFrameGroup.LastPositionKeyFrame.Frame, centerVMDBoneFrameGroup.NextPositionKeyFrame.Frame);
-                float yCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, centerVMDBoneFrameGroup.LastPositionKeyFrame.Frame, centerVMDBoneFrameGroup.NextPositionKeyFrame.Frame);
-                float zCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, centerVMDBoneFrameGroup.LastPositionKeyFrame.Frame, centerVMDBoneFrameGroup.NextPositionKeyFrame.Frame);
+                float xCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+                float yCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+                float zCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
 
                 float xCenterInterpolation = Mathf.Lerp(centerLastPositionVMDBoneFrame.Position.x, centerNextPositionVMDBoneFrame.Position.x, xCenterInterpolationRate);
                 float yCenterInterpolation = Mathf.Lerp(centerLastPositionVMDBoneFrame.Position.y, centerNextPositionVMDBoneFrame.Position.y, yCenterInterpolationRate);
@@ -426,9 +426,9 @@ public class VMDController : MonoBehaviour
 
                 if (grooveNextPositionVMDBoneFrame != null && grooveLastPositionVMDBoneFrame != null)
                 {
-                    float xGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, grooveVMDBoneFrameGroup.LastPositionKeyFrame.Frame, grooveVMDBoneFrameGroup.NextPositionKeyFrame.Frame);
-                    float yGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, grooveVMDBoneFrameGroup.LastPositionKeyFrame.Frame, grooveVMDBoneFrameGroup.NextPositionKeyFrame.Frame);
-                    float zGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, grooveVMDBoneFrameGroup.LastPositionKeyFrame.Frame, grooveVMDBoneFrameGroup.NextPositionKeyFrame.Frame);
+                    float xGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+                    float yGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+                    float zGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
 
                     float xGrooveInterpolation = Mathf.Lerp(grooveLastPositionVMDBoneFrame.Position.x, grooveNextPositionVMDBoneFrame.Position.x, xGrooveInterpolationRate);
                     float yGrooveInterpolation = Mathf.Lerp(grooveLastPositionVMDBoneFrame.Position.y, grooveNextPositionVMDBoneFrame.Position.y, yGrooveInterpolationRate);
@@ -439,12 +439,12 @@ public class VMDController : MonoBehaviour
 
             if (centerNextRotationVMDBoneFrame != null && centerLastRotationVMDBoneFrame != null)
             {
-                float centerRotationInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frame, centerVMDBoneFrameGroup.LastRotationKeyFrame.Frame, centerVMDBoneFrameGroup.NextRotationKeyFrame.Frame);
+                float centerRotationInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frame, centerVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
                 target.localRotation = Quaternion.Lerp(centerLastRotationVMDBoneFrame.Rotation, centerNextRotationVMDBoneFrame.Rotation, centerRotationInterpolationRate);
 
                 if (grooveNextPositionVMDBoneFrame != null && grooveLastPositionVMDBoneFrame != null)
                 {
-                    float grooveRotationInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frame, grooveVMDBoneFrameGroup.LastRotationKeyFrame.Frame, grooveVMDBoneFrameGroup.NextRotationKeyFrame.Frame);
+                    float grooveRotationInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frame, grooveVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
                     target.localRotation = target.localRotation.PlusRotation(Quaternion.Lerp(grooveLastRotationVMDBoneFrame.Rotation, grooveNextRotationVMDBoneFrame.Rotation, grooveRotationInterpolationRate));
                 }
             }
@@ -594,9 +594,9 @@ public class VMDController : MonoBehaviour
 
             if (nextPositionVMDBoneFrame != null && lastPositionVMDBoneFrame != null)
             {
-                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
-                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
-                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, lastPositionVMDBoneFrame.Frame, nextPositionVMDBoneFrame.Frame);
+                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, lastPositionVMDBoneFrame.FrameNumber, nextPositionVMDBoneFrame.FrameNumber);
+                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, lastPositionVMDBoneFrame.FrameNumber, nextPositionVMDBoneFrame.FrameNumber);
+                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, lastPositionVMDBoneFrame.FrameNumber, nextPositionVMDBoneFrame.FrameNumber);
 
                 float xInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
                 float yInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
@@ -607,7 +607,7 @@ public class VMDController : MonoBehaviour
 
             if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
             {
-                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frame, vmdBoneFrameGroup.LastRotationKeyFrame.Frame, vmdBoneFrameGroup.NextRotationKeyFrame.Frame);
+                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frame, vmdBoneFrameGroup.LastRotationKeyFrame.FrameNumber, vmdBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
                 Target.localRotation = Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate);
             }
 

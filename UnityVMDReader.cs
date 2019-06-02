@@ -69,34 +69,43 @@ namespace UnityVMDReader
 
             public VMD.BoneKeyFrame GetKeyFrame(int frameNumber)
             {
+                //if (frameNumber == frameNumberCash + 1)
+                //{
+                //    frameNumberCash = frameNumber;
+                //    return GetKeyFrameUsingCash(frameNumber);
+                //}
+
                 frameNumberCash = frameNumber;
-
-                if (frameNumber == frameNumberCash + 1)
-                {
-                    return GetKeyFrameUsingCash(frameNumber);
-                }
-
                 return GetKeyFrameWithoutCash(frameNumber);
             }
 
             private VMD.BoneKeyFrame GetKeyFrameUsingCash(int frameNumber)
             {
-                CurrentKeyFrame = BoneKeyFrames.Find(x => x.Frame == frameNumber);
+                CurrentKeyFrame = BoneKeyFrames.Find(x => x.FrameNumber == frameNumber);
+
+                if (CurrentKeyFrame == null) { return null; }
 
                 if (CurrentKeyFrame.Position != Vector3.zero)
                 {
                     LastPositionKeyFrame = CurrentKeyFrame;
-                    NextPositionKeyFrame = BonePositionKeyFrames.Find(x => x.Frame > frameNumber);
+                    NextPositionKeyFrame = BonePositionKeyFrames.Find(x => x.FrameNumber > frameNumber);
                 }
                 if (CurrentKeyFrame.Rotation != ZeroQuaternion)
                 {
                     LastRotationKeyFrame = CurrentKeyFrame;
-                    NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.Frame > frameNumber);
+                    NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.FrameNumber > frameNumber);
                 }
 
                 if (LastPositionKeyFrame == null && LastRotationKeyFrame == null)
                 {
-                    LastKeyFrame = CurrentKeyFrame;
+                    if (CurrentKeyFrame != null)
+                    {
+                        LastKeyFrame = CurrentKeyFrame;
+                    }
+                }
+                else if (LastPositionKeyFrame != null && LastRotationKeyFrame != null)
+                {
+                    LastKeyFrame = LastPositionKeyFrame.FrameNumber < LastRotationKeyFrame.FrameNumber ? LastRotationKeyFrame : LastPositionKeyFrame;
                 }
                 else if (LastPositionKeyFrame == null)
                 {
@@ -105,10 +114,6 @@ namespace UnityVMDReader
                 else if (LastRotationKeyFrame == null)
                 {
                     LastKeyFrame = LastPositionKeyFrame;
-                }
-                else
-                {
-                    LastKeyFrame = LastPositionKeyFrame.Frame < LastRotationKeyFrame.Frame ? LastRotationKeyFrame : LastPositionKeyFrame;
                 }
 
                 if (CurrentKeyFrame != null)
@@ -129,16 +134,23 @@ namespace UnityVMDReader
 
             private VMD.BoneKeyFrame GetKeyFrameWithoutCash(int frameNumber)
             {
-                CurrentKeyFrame = BoneKeyFrames.Find(x => x.Frame == frameNumber);
+                CurrentKeyFrame = BoneKeyFrames.Find(x => x.FrameNumber == frameNumber);
 
-                LastPositionKeyFrame = BonePositionKeyFrames.FindLast(x => x.Frame <= frameNumber);
-                LastRotationKeyFrame = BoneRotationKeyFrames.FindLast(x => x.Frame <= frameNumber);
-                NextPositionKeyFrame = BonePositionKeyFrames.Find(x => x.Frame > frameNumber);
-                NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.Frame > frameNumber);
-
+                LastPositionKeyFrame = BonePositionKeyFrames.FindLast(x => x.FrameNumber <= frameNumber);
+                LastRotationKeyFrame = BoneRotationKeyFrames.FindLast(x => x.FrameNumber <= frameNumber);
+                NextPositionKeyFrame = BonePositionKeyFrames.Find(x => x.FrameNumber > frameNumber);
+                NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.FrameNumber > frameNumber);
+                
                 if (LastPositionKeyFrame == null && LastRotationKeyFrame == null)
                 {
-                    LastKeyFrame = CurrentKeyFrame;
+                    if (CurrentKeyFrame != null)
+                    {
+                        LastKeyFrame = CurrentKeyFrame;
+                    }
+                }
+                else if (LastPositionKeyFrame != null && LastRotationKeyFrame != null)
+                {
+                    LastKeyFrame = LastPositionKeyFrame.FrameNumber < LastRotationKeyFrame.FrameNumber ? LastRotationKeyFrame : LastPositionKeyFrame;
                 }
                 else if (LastPositionKeyFrame == null)
                 {
@@ -147,10 +159,6 @@ namespace UnityVMDReader
                 else if (LastRotationKeyFrame == null)
                 {
                     LastKeyFrame = LastPositionKeyFrame;
-                }
-                else
-                {
-                    LastKeyFrame = LastPositionKeyFrame.Frame < LastRotationKeyFrame.Frame ? LastRotationKeyFrame : LastPositionKeyFrame;
                 }
 
                 if (CurrentKeyFrame != null)
@@ -178,7 +186,9 @@ namespace UnityVMDReader
 
             public void OrderByFrame()
             {
-                BoneKeyFrames = BoneKeyFrames.OrderBy(x => x.Frame).ToList();
+                BoneKeyFrames = BoneKeyFrames.OrderBy(x => x.FrameNumber).ToList();
+                BonePositionKeyFrames = BonePositionKeyFrames.OrderBy(x => x.FrameNumber).ToList();
+                BoneRotationKeyFrames = BoneRotationKeyFrames.OrderBy(x => x.FrameNumber).ToList();
             }
         }
 
@@ -227,7 +237,7 @@ namespace UnityVMDReader
             if (BoneKeyFrameGroups.All(x => x.BoneKeyFrames.Count == 0)) { return; }
 
             //ついでに最終フレームも求めておく
-            FrameCount = BoneKeyFrameGroups.Where(x => x.BoneKeyFrames.Count > 0).Max(x => x.BoneKeyFrames.Last().Frame);
+            FrameCount = BoneKeyFrameGroups.Where(x => x.BoneKeyFrames.Count > 0).Max(x => x.BoneKeyFrames.Last().FrameNumber);
         }
 
         public BoneKeyFrameGroup GetBoneKeyFrameGroup(BoneKeyFrameGroup.BoneNames boneName)
@@ -251,7 +261,7 @@ namespace UnityVMDReader
             public string Name { get; private set; } = "";
 
             //フレーム番号
-            public int Frame { get; private set; }
+            public int FrameNumber { get; private set; }
 
             //ボーンの位置、UnityでいうlocalPosition、ただし縮尺はUnityの空間の約10倍
             public Vector3 Position { get; private set; }
@@ -324,7 +334,7 @@ namespace UnityVMDReader
                 Name = System.Text.Encoding.GetEncoding("shift_jis").GetString(nameBytes);
                 //ヌル文字除去
                 Name = Name.TrimEnd('\0').TrimEnd('?').TrimEnd('\0');
-                Frame = binaryReader.ReadInt32();
+                FrameNumber = binaryReader.ReadInt32();
                 float[] positionArray = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
                 //座標系の違いにより、xをマイナスにすることに注意
                 Position = new Vector3(-positionArray[0], positionArray[1], positionArray[2]);
