@@ -9,7 +9,7 @@ namespace UnityVMDReader
     //注意！VMDファイルではShitJISが用いられているが、UnityでShiftJISを使うには一工夫必要！！
     //Unity ShiftJISで検索すること
 
-    class VMDReader
+    public class VMDReader
     {
         //人ボーンのキーフレームのボーンごとの集合
         public class BoneKeyFrameGroup
@@ -140,7 +140,7 @@ namespace UnityVMDReader
                 LastRotationKeyFrame = BoneRotationKeyFrames.FindLast(x => x.FrameNumber <= frameNumber);
                 NextPositionKeyFrame = BonePositionKeyFrames.Find(x => x.FrameNumber > frameNumber);
                 NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.FrameNumber > frameNumber);
-                
+
                 if (LastPositionKeyFrame == null && LastRotationKeyFrame == null)
                 {
                     if (CurrentKeyFrame != null)
@@ -201,7 +201,7 @@ namespace UnityVMDReader
 
         void InitializeBoneKeyFrameGroups()
         {
-            BoneKeyFrameGroups.Clear(); 
+            BoneKeyFrameGroups.Clear();
             for (int i = 0; i < BoneKeyFrameGroup.BoneStringNames.Count; i++)
             {
                 BoneKeyFrameGroups.Add(new BoneKeyFrameGroup((BoneKeyFrameGroup.BoneNames)i));
@@ -252,7 +252,7 @@ namespace UnityVMDReader
         }
     }
 
-    class VMD
+    public class VMD
     {
         //人ボーンのキーフレーム
         public class BoneKeyFrame
