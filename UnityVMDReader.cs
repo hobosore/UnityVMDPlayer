@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace UnityVMDReader
 {
-    //注意！VMDファイルではShitJISが用いられているが、UnityでShiftJISを使うには一工夫必要！！
+    //注意！VMDファイルではShiftJISが用いられているが、UnityでShiftJISを使うには一工夫必要！！
     //Unity ShiftJISで検索すること
 
     public class VMDReader
