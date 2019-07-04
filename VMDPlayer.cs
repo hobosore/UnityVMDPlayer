@@ -24,10 +24,10 @@ public class VMDPlayer : MonoBehaviour
     const float FPSs = 0.03333f;
     //ボーン移動量の補正係数
     //この値は大体の値、改良の余地あり
-    const float DefaultBoneAmplifier = 0.005f;
+    const float DefaultBoneAmplifier = 0.05f;
     const float ParentAmplifier = 0.05f;
     const float CenterIKAmplifier = 0.01f;
-    const float FootIKAmplifier = 0.05f;
+    const float FootIKAmplifier = 0.08f;
 
     //以下はStart時に初期化
     //animatorはPlay時にも一応初期化
@@ -270,13 +270,13 @@ public class VMDPlayer : MonoBehaviour
 
     void Animate(int frameNumber)
     {
-        void animateParentOfAll(float amp = ParentAmplifier)
+        void animateParentOfAll()
         {
             VMD.BoneKeyFrame parentBoneFrame = vmdReader.GetBoneKeyFrame(VMDReader.BoneKeyFrameGroup.BoneNames.全ての親, frameNumber);
             if (parentBoneFrame == null) { parentBoneFrame = new VMD.BoneKeyFrame(); }
             if (parentBoneFrame.Position != Vector3.zero)
             {
-                transform.localPosition = originalParentLocalPosition + parentBoneFrame.Position * amp;
+                transform.localPosition = originalParentLocalPosition + parentBoneFrame.Position * ParentAmplifier;
             }
             if (parentBoneFrame.Rotation != ZeroQuaternion)
             {
@@ -307,7 +307,7 @@ public class VMDPlayer : MonoBehaviour
 
     void Interpolate(int frameNumber)
     {
-        void interpolateParentOfAll(float amp = ParentAmplifier)
+        void interpolateParentOfAll()
         {
             VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = vmdReader.GetBoneKeyFrameGroup(VMDReader.BoneKeyFrameGroup.BoneNames.全ての親);
             VMD.BoneKeyFrame lastPositionVMDBoneFrame = vmdBoneFrameGroup.LastPositionKeyFrame;
@@ -324,7 +324,7 @@ public class VMDPlayer : MonoBehaviour
                 float xInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
                 float yInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
                 float zInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.z, nextPositionVMDBoneFrame.Position.z, zInterpolationRate);
-                transform.localPosition = originalParentLocalPosition + new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
+                transform.localPosition = originalParentLocalPosition + new Vector3(xInterpolation, yInterpolation, zInterpolation) * ParentAmplifier;
             }
 
             if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
@@ -490,45 +490,6 @@ public class VMDPlayer : MonoBehaviour
                 spine.localRotation = spine.localRotation.PlusRotation(Quaternion.Lerp(grooveLastRotationVMDBoneFrame.Rotation, grooveNextRotationVMDBoneFrame.Rotation, grooveRotationInterpolationRate));
             }
         }
-
-        //public void InterpolateIK(int frame)
-        //{
-        //    SetIKEnable(frame);
-
-        //    if (!Enable) { return; }
-
-        //    void interpolateBone(VMDReader.BoneKeyFrameGroup.BoneNames boneName, Transform target, Vector3 firstLocalPosition, Quaternion firstLocalRotation)
-        //    {
-        //        VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(boneName);
-
-        //        VMD.BoneKeyFrame lastPositionVMDBoneFrame = vmdBoneFrameGroup.LastPositionKeyFrame;
-        //        VMD.BoneKeyFrame lastRotationVMDBoneFrame = vmdBoneFrameGroup.LastRotationKeyFrame;
-        //        VMD.BoneKeyFrame nextPositionVMDBoneFrame = vmdBoneFrameGroup.NextPositionKeyFrame;
-        //        VMD.BoneKeyFrame nextRotationVMDBoneFrame = vmdBoneFrameGroup.NextRotationKeyFrame;
-
-        //        //センターを補間
-        //        if (nextPositionVMDBoneFrame != null && lastPositionVMDBoneFrame != null)
-        //        {
-        //            float xCenterInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frame, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-        //            float yCenterInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frame, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-        //            float zCenterInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frame, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-
-        //            float xCenterInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xCenterInterpolationRate);
-        //            float yCenterInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yCenterInterpolationRate);
-        //            float zCenterInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.z, nextPositionVMDBoneFrame.Position.z, zCenterInterpolationRate);
-        //            target.localPosition = firstLocalPosition + new Vector3(xCenterInterpolation, yCenterInterpolation, zCenterInterpolation) * Amp;
-        //        }
-
-        //        if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
-        //        {
-        //            float centerRotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frame, vmdBoneFrameGroup.LastRotationKeyFrame.FrameNumber, vmdBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
-        //            target.localRotation = firstLocalRotation.PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, centerRotationInterpolationRate));
-        //        }
-        //    }
-
-        //    interpolateBone(centerBoneName, spine, spineFirstLocalPostion, spineFirstLocalRotation);
-        //    interpolateBone(grooveBoneName, hip, hipFirstLocalPostion, hipFirstLocalRotation);
-        //}
 
         //内部でIKのEnableの値を設定しているが、VMDのIKの設定にセンターの有効無効は含まれない？
         private void SetIKEnable(int frame)
