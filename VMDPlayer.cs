@@ -149,6 +149,11 @@ public class VMDPlayer : MonoBehaviour
 
         //補間
         Interpolate(frameNumber);
+
+        //IKなど
+        if (UseCenterIK && centerIK != null) { centerIK.IK(frameNumber); }
+        if (leftFootIK != null && UseFootIK) { leftFootIK.IK(frameNumber); }
+        if (rightFootIK != null && UseFootIK) { rightFootIK.IK(frameNumber); }
     }
 
     // Update is called once per frame
@@ -298,9 +303,6 @@ public class VMDPlayer : MonoBehaviour
 
         if (UseParentOfAll) { animateParentOfAll(); }
         foreach (VMDReader.BoneKeyFrameGroup.BoneNames boneName in boneTransformDictionary.Keys) { animateBone(boneName); }
-        if (UseCenterIK && centerIK != null) { centerIK.IK(frameNumber); }
-        if (leftFootIK != null && UseFootIK) { leftFootIK.IK(frameNumber); }
-        if (rightFootIK != null && UseFootIK) { rightFootIK.IK(frameNumber); }
     }
 
     void Interpolate(int frameNumber)
