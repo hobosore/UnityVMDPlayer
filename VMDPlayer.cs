@@ -17,7 +17,6 @@ public class VMDPlayer : MonoBehaviour
     Action endAction = () => { };
     //全ての親はデフォルトでオフ
     public bool UseParentOfAll = false;
-    public bool UseCenterIK = true;
     public bool UseFootIK = true;
     //デフォルトは30fps、垂直同期は切らないと重い?
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
@@ -43,7 +42,7 @@ public class VMDPlayer : MonoBehaviour
     Quaternion originalParentLocalRotation;
     FootIK leftFootIK;
     FootIK rightFootIK;
-    CenterIK centerIK;
+    CenterAnimation centerIK;
     VMDReader vmdReader;
 
     //以下はインスペクタにて設定
@@ -172,7 +171,7 @@ public class VMDPlayer : MonoBehaviour
         Interpolate(frameNumber);
 
         //IKなど
-        if (UseCenterIK && centerIK != null) { centerIK.IK(frameNumber); }
+        if (centerIK != null) { centerIK.Animate(frameNumber); }
         if (leftFootIK != null && UseFootIK) { leftFootIK.IK(frameNumber); }
         if (rightFootIK != null && UseFootIK) { rightFootIK.IK(frameNumber); }
     }
@@ -240,7 +239,7 @@ public class VMDPlayer : MonoBehaviour
         centerIK = null;
         leftFootIK = null;
         rightFootIK = null;
-        centerIK = new CenterIK(vmdReader, Animator);
+        centerIK = new CenterAnimation(vmdReader, Animator);
         Animate(frameNumber);
         leftFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.LeftFoot, LeftFootOffset);
         rightFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.RightFoot, RightFootOffset);
@@ -263,17 +262,16 @@ public class VMDPlayer : MonoBehaviour
         Play(filePath);
     }
 
-    public void Play(string filePath, bool useCenterIK, bool useParentOfAll)
+    public void Play(string filePath, bool useParentOfAll)
     {
-        UseCenterIK = useCenterIK;
         useParentOfAll = UseParentOfAll;
         Play(filePath);
     }
 
-    public void Play(string filePath, bool useCenterIK, bool useParentOfAll, Action endAction)
+    public void Play(string filePath, bool useParentOfAll, Action endAction)
     {
         this.endAction = endAction;
-        Play(filePath, useCenterIK, useParentOfAll);
+        Play(filePath, useParentOfAll);
     }
 
     //あまりテストしていない
@@ -282,6 +280,10 @@ public class VMDPlayer : MonoBehaviour
         this.frameNumber = frameNumber;
         Animate(frameNumber);
         Interpolate(frameNumber);
+        //IKなど
+        if (centerIK != null) { centerIK.Animate(frameNumber); }
+        if (leftFootIK != null && UseFootIK) { leftFootIK.IK(frameNumber); }
+        if (rightFootIK != null && UseFootIK) { rightFootIK.IK(frameNumber); }
     }
 
     public void Pause()
@@ -326,7 +328,7 @@ public class VMDPlayer : MonoBehaviour
         foreach (VMDReader.BoneKeyFrameGroup.BoneNames boneName in boneTransformDictionary.Keys) { animateBone(boneName); }
 
         //センターやIK
-        if (UseCenterIK) { centerIK.IK(frameNumber); }
+        centerIK.Animate(frameNumber);
         if (leftFootIK != null && UseFootIK) { leftFootIK.IK(frameNumber); }
         if (rightFootIK != null && UseFootIK) { rightFootIK.IK(frameNumber); }
     }
@@ -395,13 +397,13 @@ public class VMDPlayer : MonoBehaviour
         foreach (VMDReader.BoneKeyFrameGroup.BoneNames boneName in boneTransformDictionary.Keys) { interpolateBone(boneName); }
 
         //センターやIK
-        if (UseCenterIK) { centerIK.InterpolateIK(frameNumber); }
+        centerIK.Interpolate(frameNumber);
         if (leftFootIK != null && UseFootIK) { leftFootIK.InterpolateIK(frameNumber); }
         if (rightFootIK != null && UseFootIK) { rightFootIK.InterpolateIK(frameNumber); }
     }
 
     //VMDではセンターはHipの差分のみの位置、回転情報を持つ
-    class CenterIK
+    class CenterAnimation
     {
         //センターでは回転情報なしは0,0,0,0ではなく0,0,0,1である
         readonly Quaternion ZeroQuaternion = Quaternion.identity;
@@ -416,7 +418,7 @@ public class VMDPlayer : MonoBehaviour
         Vector3 originalLocalPosition;
         Quaternion originalLocalRotation;
 
-        public CenterIK(VMDReader vmdReader, Animator animator)
+        public CenterAnimation(VMDReader vmdReader, Animator animator)
         {
             VMDReader = vmdReader;
             Animator = animator;
@@ -425,7 +427,7 @@ public class VMDPlayer : MonoBehaviour
             originalLocalRotation = hips.localRotation;
         }
 
-        public void IK(int frame)
+        public void Animate(int frame)
         {
             //センターをアニメーション
             VMD.BoneKeyFrame centerVMDBoneFrame = VMDReader.GetBoneKeyFrame(centerBoneName, frame);
@@ -454,7 +456,7 @@ public class VMDPlayer : MonoBehaviour
             }
         }
 
-        public void InterpolateIK(int frameNumber)
+        public void Interpolate(int frameNumber)
         {
             VMDReader.BoneKeyFrameGroup centerVMDBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(centerBoneName);
             VMDReader.BoneKeyFrameGroup grooveVMDBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(grooveBoneName);
