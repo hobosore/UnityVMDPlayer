@@ -450,8 +450,6 @@ public class VMDPlayer : MonoBehaviour
                 Quaternion originalRotation = isLeft ? leftFootIK.BoneLocalRotationDictionary[boneTransform] : rightFootIK.BoneLocalRotationDictionary[boneTransform];
                 //y軸回転以外は無視できる
                 boneTransform.localRotation = originalRotation.PlusRotation(Quaternion.Euler(0, vmdBoneFrame.Rotation.y, 0));
-                Debug.Log(boneName);
-                Debug.Log(vmdBoneFrame.Rotation.y);
             }
         }
     }
