@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
@@ -20,10 +20,10 @@ public class VMDPlayer : MonoBehaviour
     const float FPSs = 0.03333f;
     //ボーン移動量の補正係数
     //この値は大体の値、改良の余地あり
-    const float DefaultBoneAmplifier = 0.07f;
-    const float ParentAmplifier = 0.07f;
-    const float CenterIKAmplifier = 0.07f;
-    const float FootIKAmplifier = 0.07f;
+    const float DefaultBoneAmplifier = 0.06f;
+    const float ParentAmplifier = 0.06f;
+    const float CenterIKAmplifier = 0.06f;
+    const float FootIKAmplifier = 0.06f;
     //エラー値の再現に用いる
     readonly Quaternion ZeroQuaternion = new Quaternion(0, 0, 0, 0);
 
@@ -203,7 +203,7 @@ public class VMDPlayer : MonoBehaviour
         if (leftFootIK != null && UseFootIK) { leftFootIKExists = leftFootIK.IK(frameNumber); }
         if (rightFootIK != null && UseFootIK) { rightFootIKExists = rightFootIK.IK(frameNumber); }
 
-        ////腰から下を動かす
+        //腰から下を動かす
         if (leftFootIKExists) { AnimateLowerBody(frameNumber, leftLowerBoneTransformDictionary); }
         if (rightFootIKExists) { AnimateLowerBody(frameNumber, rightLowerBoneTransformDictionary); }
 
@@ -211,7 +211,7 @@ public class VMDPlayer : MonoBehaviour
         if (leftFootIK != null && UseFootIK) { leftFootIK.InterpolateIK(frameNumber); }
         if (rightFootIK != null && UseFootIK) { rightFootIK.InterpolateIK(frameNumber); }
 
-        ////腰から下の補間
+        //腰から下の補間
         InterpolateLowerBody(frameNumber, leftLowerBoneTransformDictionary);
         InterpolateLowerBody(frameNumber, rightLowerBoneTransformDictionary);
     }
@@ -448,7 +448,8 @@ public class VMDPlayer : MonoBehaviour
             if (vmdBoneFrame.Rotation != ZeroQuaternion)
             {
                 Quaternion originalRotation = isLeft ? leftFootIK.BoneLocalRotationDictionary[boneTransform] : rightFootIK.BoneLocalRotationDictionary[boneTransform];
-                boneTransform.localRotation = originalRotation.PlusRotation(vmdBoneFrame.Rotation);
+                //y軸回転以外は無視できる
+                boneTransform.localRotation = originalRotation.PlusRotation(Quaternion.Euler(0, vmdBoneFrame.Rotation.y, 0));
             }
         }
     }
@@ -472,7 +473,10 @@ public class VMDPlayer : MonoBehaviour
             {
                 Quaternion originalRotation = isLeft ? leftFootIK.BoneLocalRotationDictionary[boneTransform] : rightFootIK.BoneLocalRotationDictionary[boneTransform];
                 float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, lastRotationVMDBoneFrame.FrameNumber, nextRotationVMDBoneFrame.FrameNumber);
-                boneTransform.localRotation = originalRotation.PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
+                Quaternion rotation = Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate);
+                //y軸回転以外は無視できる
+                Vector3 rotationVector = new Vector3(0, rotation.eulerAngles.y, 0);
+                boneTransform.localRotation = originalRotation.PlusRotation(Quaternion.Euler(rotationVector));
             }
         }
     }
@@ -842,7 +846,9 @@ public class VMDPlayer : MonoBehaviour
 
             FootTransform.localRotation = Quaternion.identity;
 
-            Target.localPosition = firstLocalPosition + footIKFrame.Position * FootIKAmplifier + FootTransform.localRotation * Offset;
+            Vector3 moveVector = footIKFrame.Position;
+
+            Target.localPosition = firstLocalPosition + moveVector * FootIKAmplifier + Offset; // + FootTransform.localRotation * Offset;
 
             IK();
 
@@ -886,7 +892,8 @@ public class VMDPlayer : MonoBehaviour
                 float yInterpolation = Mathf.Lerp(lastPositionFootVMDBoneFrame.Position.y, nextPositionFootVMDBoneFrame.Position.y, yInterpolationRate);
                 float zInterpolation = Mathf.Lerp(lastPositionFootVMDBoneFrame.Position.z, nextPositionFootVMDBoneFrame.Position.z, zInterpolationRate);
 
-                Target.localPosition = firstLocalPosition + new Vector3(xInterpolation, yInterpolation, zInterpolation) * FootIKAmplifier + FootTransform.localRotation * Offset;
+                Vector3 moveVector = new Vector3(xInterpolation, yInterpolation, zInterpolation);
+                Target.localPosition = firstLocalPosition + moveVector * FootIKAmplifier + Offset;// + FootTransform.localRotation * Offset;
             }
 
             IK();
