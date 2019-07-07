@@ -114,19 +114,19 @@ public class VMDPlayer : MonoBehaviour
         };
         leftLowerBoneTransformDictionary = new Dictionary<VMDReader.BoneKeyFrameGroup.BoneNames, (Transform, float)>()
         {
-            //センターはHips
             //下半身などというものはUnityにはないので、センターとともに処理
             { VMDReader.BoneKeyFrameGroup.BoneNames.左足 ,     (Animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.左ひざ ,   (Animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg), DefaultBoneAmplifier) },
+            //ひざボーンはほとんど動けないので実際のところ無視してよい
+            //{ VMDReader.BoneKeyFrameGroup.BoneNames.左ひざ ,   (Animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg), DefaultBoneAmplifier) },
             //足首ボーンはほとんど動けないので実際のところ無視してよい
             //{ VMDReader.BoneKeyFrameGroup.BoneNames.左足首 ,   (Animator.GetBoneTransform(HumanBodyBones.LeftFoot), DefaultBoneAmplifier) },
         };
         rightLowerBoneTransformDictionary = new Dictionary<VMDReader.BoneKeyFrameGroup.BoneNames, (Transform, float)>()
         {
-            //センターはHips
             //下半身などというものはUnityにはないので、センターとともに処理
             { VMDReader.BoneKeyFrameGroup.BoneNames.右足 ,     (Animator.GetBoneTransform(HumanBodyBones.RightUpperLeg), DefaultBoneAmplifier) },
-            { VMDReader.BoneKeyFrameGroup.BoneNames.右ひざ ,   (Animator.GetBoneTransform(HumanBodyBones.RightLowerLeg), DefaultBoneAmplifier) },
+            //ひざボーンはほとんど動けないので実際のところ無視してよい
+            //{ VMDReader.BoneKeyFrameGroup.BoneNames.右ひざ ,   (Animator.GetBoneTransform(HumanBodyBones.RightLowerLeg), DefaultBoneAmplifier) },
             //足首ボーンはほとんど動けないので実際のところ無視してよい
             //{ VMDReader.BoneKeyFrameGroup.BoneNames.右足首 ,   (Animator.GetBoneTransform(HumanBodyBones.RightFoot), DefaultBoneAmplifier) },
         };
@@ -450,6 +450,8 @@ public class VMDPlayer : MonoBehaviour
                 Quaternion originalRotation = isLeft ? leftFootIK.BoneLocalRotationDictionary[boneTransform] : rightFootIK.BoneLocalRotationDictionary[boneTransform];
                 //y軸回転以外は無視できる
                 boneTransform.localRotation = originalRotation.PlusRotation(Quaternion.Euler(0, vmdBoneFrame.Rotation.y, 0));
+                Debug.Log(boneName);
+                Debug.Log(vmdBoneFrame.Rotation.y);
             }
         }
     }
