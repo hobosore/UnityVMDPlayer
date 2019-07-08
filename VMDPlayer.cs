@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
@@ -14,7 +14,8 @@ public class VMDPlayer : MonoBehaviour
     Action endAction = () => { };
     //全ての親はデフォルトでオン
     public bool UseParentOfAll = true;
-    public bool UseFootIK = true;
+    //下半身の回転はまだ開発中
+    public bool UseLowerBodyRotation = false;
     //デフォルトは30fps、垂直同期は切らないと重いことがある?
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
     const float FPSs = 0.03333f;
@@ -53,8 +54,8 @@ public class VMDPlayer : MonoBehaviour
     public Transform LeftUpperArmTwist;
     public Transform RightUpperArmTwist;
     //VMDファイルのパスを与えて再生するまでオフセットは更新されない
-    public Vector3 LeftFootOffset = new Vector3(-0.15f, -0.6f, 0);
-    public Vector3 RightFootOffset = new Vector3(0.15f, -0.6f, 0);
+    public Vector3 LeftFootOffset = new Vector3(-0.15f, 0, 0);
+    public Vector3 RightFootOffset = new Vector3(0.15f, 0, 0);
 
     // Start is called before the first frame update
     void Start()
@@ -200,20 +201,26 @@ public class VMDPlayer : MonoBehaviour
         //当該フレームで足IKの実値があったかどうか
         bool leftFootIKExists = false;
         bool rightFootIKExists = false;
-        if (leftFootIK != null && UseFootIK) { leftFootIKExists = leftFootIK.IK(frameNumber); }
-        if (rightFootIK != null && UseFootIK) { rightFootIKExists = rightFootIK.IK(frameNumber); }
+        if (leftFootIK != null) { leftFootIKExists = leftFootIK.IK(frameNumber); }
+        if (rightFootIK != null) { rightFootIKExists = rightFootIK.IK(frameNumber); }
 
         //腰から下を動かす
-        if (leftFootIKExists) { AnimateLowerBody(frameNumber, leftLowerBoneTransformDictionary); }
-        if (rightFootIKExists) { AnimateLowerBody(frameNumber, rightLowerBoneTransformDictionary); }
+        if (UseLowerBodyRotation)
+        {
+            if (leftFootIKExists) { AnimateLowerBody(frameNumber, leftLowerBoneTransformDictionary); }
+            if (rightFootIKExists) { AnimateLowerBody(frameNumber, rightLowerBoneTransformDictionary); }
+        }
 
         //足IKの補間
-        if (leftFootIK != null && UseFootIK) { leftFootIK.InterpolateIK(frameNumber); }
-        if (rightFootIK != null && UseFootIK) { rightFootIK.InterpolateIK(frameNumber); }
+        if (leftFootIK != null) { leftFootIK.InterpolateIK(frameNumber); }
+        if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
 
         //腰から下の補間
-        InterpolateLowerBody(frameNumber, leftLowerBoneTransformDictionary);
-        InterpolateLowerBody(frameNumber, rightLowerBoneTransformDictionary);
+        if (UseLowerBodyRotation)
+        {
+            InterpolateLowerBody(frameNumber, leftLowerBoneTransformDictionary);
+            InterpolateLowerBody(frameNumber, rightLowerBoneTransformDictionary);
+        }
     }
 
     // Update is called once per frame
@@ -328,10 +335,10 @@ public class VMDPlayer : MonoBehaviour
         if (centerIK != null) { centerIK.Animate(frameNumber); }
         if (centerIK != null) { centerIK.Interpolate(frameNumber); }
         if (centerIK != null) { centerIK.Complement(frameNumber); }
-        if (leftFootIK != null && UseFootIK) { leftFootIK.IK(frameNumber); }
-        if (rightFootIK != null && UseFootIK) { rightFootIK.IK(frameNumber); }
-        if (leftFootIK != null && UseFootIK) { leftFootIK.InterpolateIK(frameNumber); }
-        if (rightFootIK != null && UseFootIK) { rightFootIK.InterpolateIK(frameNumber); }
+        if (leftFootIK != null) { leftFootIK.IK(frameNumber); }
+        if (rightFootIK != null) { rightFootIK.IK(frameNumber); }
+        if (leftFootIK != null) { leftFootIK.InterpolateIK(frameNumber); }
+        if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
     }
 
     void AnimateParentOfAll()
@@ -773,7 +780,7 @@ public class VMDPlayer : MonoBehaviour
             lowerLegLength = Vector3.Distance(KneeTransform.position, FootTransform.position);
             legLength = upperLegLength + lowerLegLength;
 
-            firstLocalPosition = FootTransform.localPosition;
+            firstLocalPosition = FootTransform.position - Animator.transform.position;
 
             BoneLocalRotationDictionary = new Dictionary<Transform, Quaternion>()
             {
@@ -848,7 +855,7 @@ public class VMDPlayer : MonoBehaviour
 
             Vector3 moveVector = footIKFrame.Position;
 
-            Target.localPosition = firstLocalPosition + moveVector * FootIKAmplifier + Offset; // + FootTransform.localRotation * Offset;
+            Target.localPosition = firstLocalPosition + (moveVector * FootIKAmplifier) + Offset;
 
             IK();
 
@@ -893,7 +900,7 @@ public class VMDPlayer : MonoBehaviour
                 float zInterpolation = Mathf.Lerp(lastPositionFootVMDBoneFrame.Position.z, nextPositionFootVMDBoneFrame.Position.z, zInterpolationRate);
 
                 Vector3 moveVector = new Vector3(xInterpolation, yInterpolation, zInterpolation);
-                Target.localPosition = firstLocalPosition + moveVector * FootIKAmplifier + Offset;// + FootTransform.localRotation * Offset;
+                Target.localPosition = firstLocalPosition + (moveVector * FootIKAmplifier) + Offset;
             }
 
             IK();

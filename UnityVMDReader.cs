@@ -336,8 +336,8 @@ namespace UnityVMDReader
                 Name = Name.TrimEnd('\0').TrimEnd('?').TrimEnd('\0');
                 FrameNumber = binaryReader.ReadInt32();
                 float[] positionArray = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
-                //座標系の違いにより、xをマイナスにすることに注意
-                Position = new Vector3(-positionArray[0], positionArray[1], positionArray[2]);
+                //座標系の違いにより、x,zをマイナスにすることに注意
+                Position = new Vector3(-positionArray[0], positionArray[1], -positionArray[2]);
                 float[] rotationArray = (from n in Enumerable.Range(0, 4) select binaryReader.ReadSingle()).ToArray();
                 //座標系の違いにより、x,zをマイナスにすることに注意
                 Rotation = new Quaternion(-rotationArray[0], rotationArray[1], -rotationArray[2], rotationArray[3]);
@@ -481,8 +481,8 @@ namespace UnityVMDReader
                 Distance = binaryReader.ReadInt32();
                 float[] positionArray = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
 
-                //座標系、xをマイナスにすることに注意
-                Position = new Vector3(-positionArray[0], positionArray[1], positionArray[2]);
+                //座標系、x,zをマイナスにすることに注意
+                Position = new Vector3(-positionArray[0], positionArray[1], -positionArray[2]);
                 float[] rotationArray = (from n in Enumerable.Range(0, 4) select binaryReader.ReadSingle()).ToArray();
 
                 //座標系、x,zをマイナスにすることに注意
@@ -530,8 +530,8 @@ namespace UnityVMDReader
                 float[] LightColor = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
 
                 float[] positionArray = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
-                //座標系の違いによりxをマイナスとする
-                Position = new float[] { -positionArray[0], positionArray[1], positionArray[2] };
+                //座標系の違いによりx,zをマイナスとする
+                Position = new float[] { -positionArray[0], positionArray[1], -positionArray[2] };
             }
         };
 
