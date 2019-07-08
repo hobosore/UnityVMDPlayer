@@ -3,4 +3,4 @@
 VMDファイルを直接読み込むことで、外部のアニメーションファイルを動的に実行できるようになります。  
   
 This is a beta version.  
-This code enable you to use an external animation file, .vmd file (Vocaloid Motion Data) in Unity.  
+This code enables you to use an external animation file, .vmd file (Vocaloid Motion Data) in Unity.  
