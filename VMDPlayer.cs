@@ -335,10 +335,22 @@ public class VMDPlayer : MonoBehaviour
         if (centerIK != null) { centerIK.Animate(frameNumber); }
         if (centerIK != null) { centerIK.Interpolate(frameNumber); }
         if (centerIK != null) { centerIK.Complement(frameNumber); }
-        if (leftFootIK != null) { leftFootIK.IK(frameNumber); }
-        if (rightFootIK != null) { rightFootIK.IK(frameNumber); }
+        bool leftFootIKExists = false;
+        bool rightFootIKExists = false;
+        if (leftFootIK != null) { leftFootIKExists = leftFootIK.IK(frameNumber); }
+        if (rightFootIK != null) { rightFootIKExists = rightFootIK.IK(frameNumber); }
+        if (UseLowerBodyRotation)
+        {
+            if (leftFootIKExists) { AnimateLowerBody(frameNumber, leftLowerBoneTransformDictionary); }
+            if (rightFootIKExists) { AnimateLowerBody(frameNumber, rightLowerBoneTransformDictionary); }
+        }
         if (leftFootIK != null) { leftFootIK.InterpolateIK(frameNumber); }
         if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
+        if (UseLowerBodyRotation)
+        {
+            InterpolateLowerBody(frameNumber, leftLowerBoneTransformDictionary);
+            InterpolateLowerBody(frameNumber, rightLowerBoneTransformDictionary);
+        }
     }
 
     void AnimateParentOfAll()
