@@ -4,7 +4,7 @@ using System.Linq;
 using System;
 using UnityVMDReader;
 
-public class VMDPlayer : MonoBehaviour
+public class UnityVMDPlayer : MonoBehaviour
 {
     public bool IsPlaying { get; private set; } = false;
     //IsEndは再生が終了したことを示すフラグで、何の処理にも使用されていない
