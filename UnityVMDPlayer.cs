@@ -12,6 +12,7 @@ public class UnityVMDPlayer : MonoBehaviour
     int frameNumber = 0;
     //モーション終了時に実行させる
     Action endAction = () => { };
+    public bool IsLoop = false;
     //全ての親はデフォルトでオン
     public bool UseParentOfAll = true;
     //下半身の回転はまだ開発中
@@ -169,6 +170,12 @@ public class UnityVMDPlayer : MonoBehaviour
         //最終フレームを超えれば終了
         if (vmdReader.FrameCount < frameNumber)
         {
+            if (IsLoop)
+            {
+                JumpToFrame(0);
+                return;
+            }
+
             IsPlaying = false;
             IsEnd = true;
             //最後にすることがあれば
