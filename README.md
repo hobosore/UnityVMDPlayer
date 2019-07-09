@@ -1,4 +1,4 @@
-# UnityVMDController(beta)
+# UnityVMDPlayer(beta)
 ユニティでVMDファイル(MMDのアニメーションファイル)を使うためのコード（β版）  
 VMDファイルを直接読み込むことで、外部のアニメーションファイルを動的に実行できるようになります。  
   
