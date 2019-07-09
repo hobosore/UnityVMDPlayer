@@ -16,7 +16,7 @@ public class UnityVMDPlayer : MonoBehaviour
     //全ての親はデフォルトでオン
     public bool UseParentOfAll = true;
     //下半身の回転はまだ開発中
-    public bool UseLowerBodyRotation = false;
+    public bool UseLegRotationBeta = false;
     //デフォルトは30fps、垂直同期は切らないと重いことがある?
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
     const float FPSs = 0.03333f;
@@ -168,7 +168,7 @@ public class UnityVMDPlayer : MonoBehaviour
         if (!IsPlaying) { return; }
 
         //最終フレームを超えれば終了
-        if (vmdReader.FrameCount < frameNumber)
+        if (vmdReader.FrameCount <= frameNumber)
         {
             if (IsLoop)
             {
@@ -212,7 +212,7 @@ public class UnityVMDPlayer : MonoBehaviour
         if (rightFootIK != null) { rightFootIKExists = rightFootIK.IK(frameNumber); }
 
         //腰から下を動かす
-        if (UseLowerBodyRotation)
+        if (UseLegRotationBeta)
         {
             if (leftFootIKExists) { AnimateLowerBody(frameNumber, leftLowerBoneTransformDictionary); }
             if (rightFootIKExists) { AnimateLowerBody(frameNumber, rightLowerBoneTransformDictionary); }
@@ -223,7 +223,7 @@ public class UnityVMDPlayer : MonoBehaviour
         if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
 
         //腰から下の補間
-        if (UseLowerBodyRotation)
+        if (UseLegRotationBeta)
         {
             InterpolateLowerBody(frameNumber, leftLowerBoneTransformDictionary);
             InterpolateLowerBody(frameNumber, rightLowerBoneTransformDictionary);
@@ -346,14 +346,14 @@ public class UnityVMDPlayer : MonoBehaviour
         bool rightFootIKExists = false;
         if (leftFootIK != null) { leftFootIKExists = leftFootIK.IK(frameNumber); }
         if (rightFootIK != null) { rightFootIKExists = rightFootIK.IK(frameNumber); }
-        if (UseLowerBodyRotation)
+        if (UseLegRotationBeta)
         {
             if (leftFootIKExists) { AnimateLowerBody(frameNumber, leftLowerBoneTransformDictionary); }
             if (rightFootIKExists) { AnimateLowerBody(frameNumber, rightLowerBoneTransformDictionary); }
         }
         if (leftFootIK != null) { leftFootIK.InterpolateIK(frameNumber); }
         if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
-        if (UseLowerBodyRotation)
+        if (UseLegRotationBeta)
         {
             InterpolateLowerBody(frameNumber, leftLowerBoneTransformDictionary);
             InterpolateLowerBody(frameNumber, rightLowerBoneTransformDictionary);
@@ -518,7 +518,7 @@ public class UnityVMDPlayer : MonoBehaviour
         VMDReader.BoneKeyFrameGroup.BoneNames grooveBoneName = VMDReader.BoneKeyFrameGroup.BoneNames.グルーブ;
 
         public VMDReader VMDReader { get; private set; }
-        //デフォルトでtrueであることに注意
+
         public Animator Animator { get; private set; }
         Transform hips;
         Transform spine;
@@ -742,7 +742,7 @@ public class UnityVMDPlayer : MonoBehaviour
         const string ToeString = "Toe";
 
         public VMDReader VMDReader { get; private set; }
-        //デフォルトでtrueであることに注意
+
         public bool Enable { get; private set; } = true;
         public Feet Foot { get; private set; }
         public Animator Animator { get; private set; }
