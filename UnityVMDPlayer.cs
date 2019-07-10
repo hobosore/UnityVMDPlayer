@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
@@ -9,7 +9,7 @@ public class UnityVMDPlayer : MonoBehaviour
     public bool IsPlaying { get; private set; } = false;
     //IsEndは再生が終了したことを示すフラグで、何の処理にも使用されていない
     public bool IsEnd { get; private set; } = false;
-    int frameNumber = 0;
+    public int FrameNumber { get; private set; } = 0;
     //モーション終了時に実行させる
     Action endAction = () => { };
     public bool IsLoop = false;
@@ -168,7 +168,7 @@ public class UnityVMDPlayer : MonoBehaviour
         if (!IsPlaying) { return; }
 
         //最終フレームを超えれば終了
-        if (vmdReader.FrameCount <= frameNumber)
+        if (vmdReader.FrameCount <= FrameNumber)
         {
             if (IsLoop)
             {
@@ -183,7 +183,7 @@ public class UnityVMDPlayer : MonoBehaviour
             return;
         }
 
-        frameNumber++;
+        FrameNumber++;
 
         //全ての親を動かす
         if (UseParentOfAll) { AnimateParentOfAll(); }
@@ -191,42 +191,42 @@ public class UnityVMDPlayer : MonoBehaviour
         if (UseParentOfAll) { InterpolateParentOfAll(); }
 
         //腰から上を動かす
-        AnimateUpperBody(frameNumber);
+        AnimateUpperBody(FrameNumber);
         //腰から上の補間
-        InterpolateUpperBody(frameNumber);
+        InterpolateUpperBody(FrameNumber);
 
         //センター
-        if (centerIK != null) { centerIK.Animate(frameNumber); }
+        if (centerIK != null) { centerIK.Animate(FrameNumber); }
 
         //センターの補間
-        if (centerIK != null) { centerIK.Interpolate(frameNumber); }
+        if (centerIK != null) { centerIK.Interpolate(FrameNumber); }
 
         //下半身の補完
-        if (centerIK != null) { centerIK.Complement(frameNumber); }
+        if (centerIK != null) { centerIK.Complement(FrameNumber); }
 
         //足IKを動かす
         //当該フレームで足IKの実値があったかどうか
         bool leftFootIKExists = false;
         bool rightFootIKExists = false;
-        if (leftFootIK != null) { leftFootIKExists = leftFootIK.IK(frameNumber); }
-        if (rightFootIK != null) { rightFootIKExists = rightFootIK.IK(frameNumber); }
+        if (leftFootIK != null) { leftFootIKExists = leftFootIK.IK(FrameNumber); }
+        if (rightFootIK != null) { rightFootIKExists = rightFootIK.IK(FrameNumber); }
 
         //腰から下を動かす
         if (UseLegRotationBeta)
         {
-            if (leftFootIKExists) { AnimateLowerBody(frameNumber, leftLowerBoneTransformDictionary); }
-            if (rightFootIKExists) { AnimateLowerBody(frameNumber, rightLowerBoneTransformDictionary); }
+            if (leftFootIKExists) { AnimateLowerBody(FrameNumber, leftLowerBoneTransformDictionary); }
+            if (rightFootIKExists) { AnimateLowerBody(FrameNumber, rightLowerBoneTransformDictionary); }
         }
 
         //足IKの補間
-        if (leftFootIK != null) { leftFootIK.InterpolateIK(frameNumber); }
-        if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
+        if (leftFootIK != null) { leftFootIK.InterpolateIK(FrameNumber); }
+        if (rightFootIK != null) { rightFootIK.InterpolateIK(FrameNumber); }
 
         //腰から下の補間
         if (UseLegRotationBeta)
         {
-            InterpolateLowerBody(frameNumber, leftLowerBoneTransformDictionary);
-            InterpolateLowerBody(frameNumber, rightLowerBoneTransformDictionary);
+            InterpolateLowerBody(FrameNumber, leftLowerBoneTransformDictionary);
+            InterpolateLowerBody(FrameNumber, rightLowerBoneTransformDictionary);
         }
     }
 
@@ -300,17 +300,17 @@ public class UnityVMDPlayer : MonoBehaviour
         leftFootIK = null;
         rightFootIK = null;
         centerIK = new CenterAnimation(vmdReader, Animator);
-        AnimateUpperBody(frameNumber);
+        AnimateUpperBody(FrameNumber);
         leftFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.LeftFoot, LeftFootOffset);
         rightFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.RightFoot, RightFootOffset);
-        AnimateUpperBody(frameNumber);
+        AnimateUpperBody(FrameNumber);
 
         Play();
     }
 
     public void Play(string filePath)
     {
-        frameNumber = 0;
+        FrameNumber = 0;
         vmdReader = new VMDReader(filePath);
 
         Play(vmdReader);
@@ -336,7 +336,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
     public void JumpToFrame(int frameNumber)
     {
-        this.frameNumber = frameNumber;
+        this.FrameNumber = frameNumber;
         AnimateUpperBody(frameNumber);
         InterpolateUpperBody(frameNumber);
         if (centerIK != null) { centerIK.Animate(frameNumber); }
@@ -362,7 +362,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
     void AnimateParentOfAll()
     {
-        VMD.BoneKeyFrame parentBoneFrame = vmdReader.GetBoneKeyFrame(VMDReader.BoneKeyFrameGroup.BoneNames.全ての親, frameNumber);
+        VMD.BoneKeyFrame parentBoneFrame = vmdReader.GetBoneKeyFrame(VMDReader.BoneKeyFrameGroup.BoneNames.全ての親, FrameNumber);
         if (parentBoneFrame == null) { parentBoneFrame = new VMD.BoneKeyFrame(); }
         if (parentBoneFrame.Position != Vector3.zero)
         {
@@ -384,9 +384,9 @@ public class UnityVMDPlayer : MonoBehaviour
 
         if (nextPositionVMDBoneFrame != null && lastPositionVMDBoneFrame != null)
         {
-            float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-            float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-            float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+            float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, FrameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+            float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, FrameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
+            float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, FrameNumber, vmdBoneFrameGroup.LastPositionKeyFrame.FrameNumber, vmdBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
 
             float xInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
             float yInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
@@ -396,7 +396,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
         if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
         {
-            float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, vmdBoneFrameGroup.LastRotationKeyFrame.FrameNumber, vmdBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
+            float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, FrameNumber, vmdBoneFrameGroup.LastRotationKeyFrame.FrameNumber, vmdBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
             transform.localRotation = originalParentLocalRotation.PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
         }
     }
