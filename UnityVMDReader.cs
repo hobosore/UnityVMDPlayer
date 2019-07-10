@@ -621,19 +621,15 @@ namespace UnityVMDReader
             try
             {
                 BinaryReader binaryReader = new BinaryReader(stream);
-                char[] buffer = new char[30];
 
                 //ファイルタイプの読み込み
-                string RightFileType = "Vocaloid Motion Data";
+                const string RightFileType = "Vocaloid Motion Data";
                 byte[] fileTypeBytes = binaryReader.ReadBytes(30);
                 string fileType = System.Text.Encoding.GetEncoding("shift_jis").GetString(fileTypeBytes).Substring(0, RightFileType.Length);
                 if (!fileType.Equals("Vocaloid Motion Data"))
                 {
                     Debug.Log("読み込もうとしたファイルはVMDファイルではありません");
                 }
-
-                //バージョンの読み込み、バージョンは後で使用していない
-                Version = BitConverter.ToSingle((from c in buffer select Convert.ToByte(c)).ToArray(), 0);
 
                 //モーション名の読み込み、Shift_JISで保存されている
                 byte[] nameBytes = binaryReader.ReadBytes(20);
