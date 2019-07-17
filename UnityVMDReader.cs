@@ -24,16 +24,17 @@ namespace UnityVMDReader
                 右ひざ, 右足首, 右つま先, 左親指１, 左親指２, 左人指１, 左人指２, 左人指３, 左中指１, 左中指２,
                 左中指３, 左薬指１, 左薬指２, 左薬指３, 左小指１, 左小指２, 左小指３, 右親指１, 右親指２, 右人指１,
                 右人指２, 右人指３, 右中指１, 右中指２, 右中指３, 右薬指１, 右薬指２, 右薬指３, 右小指１, 右小指２,
-                右小指３
+                右小指３, None
             }
 
-            public static List<string> BoneStringNames
+            public static List<string> StringBoneNames
             {
                 get
                 {
                     if (boneStringNames == null)
                     {
                         boneStringNames = Enum.GetNames(typeof(BoneNames)).ToList();
+                        boneStringNames.Remove(BoneNames.None.ToString());
                     }
 
                     return boneStringNames;
@@ -202,8 +203,9 @@ namespace UnityVMDReader
         void InitializeBoneKeyFrameGroups()
         {
             BoneKeyFrameGroups.Clear();
-            for (int i = 0; i < BoneKeyFrameGroup.BoneStringNames.Count; i++)
+            for (int i = 0; i < BoneKeyFrameGroup.StringBoneNames.Count; i++)
             {
+                if ((BoneKeyFrameGroup.BoneNames)i == BoneKeyFrameGroup.BoneNames.None) { continue; }
                 BoneKeyFrameGroups.Add(new BoneKeyFrameGroup((BoneKeyFrameGroup.BoneNames)i));
             }
         }
@@ -222,12 +224,11 @@ namespace UnityVMDReader
         {
             RawVMD = new VMD(filePath);
 
-
             //人ボーンのキーフレームをグループごとに分けてBoneKeyFrameGroupsに入れる
             foreach (VMD.BoneKeyFrame boneKeyFrame in RawVMD.BoneKeyFrames)
             {
-                if (!BoneKeyFrameGroup.BoneStringNames.Contains(boneKeyFrame.Name)) { continue; }
-                BoneKeyFrameGroups[BoneKeyFrameGroup.BoneStringNames.IndexOf(boneKeyFrame.Name)].AddKeyFrame(boneKeyFrame);
+                if (!BoneKeyFrameGroup.StringBoneNames.Contains(boneKeyFrame.Name)) { continue; }
+                BoneKeyFrameGroups[BoneKeyFrameGroup.StringBoneNames.IndexOf(boneKeyFrame.Name)].AddKeyFrame(boneKeyFrame);
             }
 
             //いちおうフレームごとに並べておく
@@ -621,15 +622,19 @@ namespace UnityVMDReader
             try
             {
                 BinaryReader binaryReader = new BinaryReader(stream);
+                char[] buffer = new char[30];
 
                 //ファイルタイプの読み込み
-                const string RightFileType = "Vocaloid Motion Data";
+                string RightFileType = "Vocaloid Motion Data";
                 byte[] fileTypeBytes = binaryReader.ReadBytes(30);
                 string fileType = System.Text.Encoding.GetEncoding("shift_jis").GetString(fileTypeBytes).Substring(0, RightFileType.Length);
                 if (!fileType.Equals("Vocaloid Motion Data"))
                 {
                     Debug.Log("読み込もうとしたファイルはVMDファイルではありません");
                 }
+
+                //バージョンの読み込み、バージョンは後で使用していない
+                Version = BitConverter.ToSingle((from c in buffer select Convert.ToByte(c)).ToArray(), 0);
 
                 //モーション名の読み込み、Shift_JISで保存されている
                 byte[] nameBytes = binaryReader.ReadBytes(20);
