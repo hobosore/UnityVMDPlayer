@@ -294,6 +294,10 @@ public class UnityVMDPlayer : MonoBehaviour
 
         //Ghost
         boneGhost.GhostAll();
+
+        //足IKを使うかどうか
+        if (leftFootIK != null) { boneGhost.SetLeftFootGhostEnable(!leftFootIK.Enable); }
+        if (rightFootIK != null) { boneGhost.SetRightFootGhostEnable(!rightFootIK.Enable); }
     }
     
     void OnDrawGizmosSelected()
@@ -1258,18 +1262,8 @@ public class UnityVMDPlayer : MonoBehaviour
             }
 
             //足についてはIKがやってくれるはず
-            if(GhostDictionary.Keys.Contains(BoneNames.左足))
-                GhostDictionary[BoneNames.左足] = (GhostDictionary[BoneNames.左足].ghost, false);
-            if (GhostDictionary.Keys.Contains(BoneNames.左ひざ))
-                GhostDictionary[BoneNames.左ひざ] = (GhostDictionary[BoneNames.左ひざ].ghost, false);
-            if (GhostDictionary.Keys.Contains(BoneNames.左足首))
-                GhostDictionary[BoneNames.左足首] = (GhostDictionary[BoneNames.左足首].ghost, false);
-            if (GhostDictionary.Keys.Contains(BoneNames.右足))
-                GhostDictionary[BoneNames.右足] = (GhostDictionary[BoneNames.右足].ghost, false);
-            if (GhostDictionary.Keys.Contains(BoneNames.右ひざ))
-                GhostDictionary[BoneNames.右ひざ] = (GhostDictionary[BoneNames.右ひざ].ghost, false);
-            if (GhostDictionary.Keys.Contains(BoneNames.右足首))
-                GhostDictionary[BoneNames.右足首] = (GhostDictionary[BoneNames.右足首].ghost, false);
+            SetLeftFootGhostEnable(false);
+            SetRightFootGhostEnable(true);
         }
 
         public void GhostAll()
@@ -1286,6 +1280,25 @@ public class UnityVMDPlayer : MonoBehaviour
                     * Quaternion.Inverse(OriginalGhostRotationDictionary[boneName])
                     * OriginalRotationDictionary[boneName];
             }
+        }
+
+        public void SetLeftFootGhostEnable(bool enabled)
+        {
+            if (GhostDictionary.Keys.Contains(BoneNames.左足))
+                GhostDictionary[BoneNames.左足] = (GhostDictionary[BoneNames.左足].ghost, enabled);
+            if (GhostDictionary.Keys.Contains(BoneNames.左ひざ))
+                GhostDictionary[BoneNames.左ひざ] = (GhostDictionary[BoneNames.左ひざ].ghost, enabled);
+            if (GhostDictionary.Keys.Contains(BoneNames.左足首))
+                GhostDictionary[BoneNames.左足首] = (GhostDictionary[BoneNames.左足首].ghost, enabled);
+        }
+        public void SetRightFootGhostEnable(bool enabled)
+        {
+            if (GhostDictionary.Keys.Contains(BoneNames.右足))
+                GhostDictionary[BoneNames.右足] = (GhostDictionary[BoneNames.右足].ghost, enabled);
+            if (GhostDictionary.Keys.Contains(BoneNames.右ひざ))
+                GhostDictionary[BoneNames.右ひざ] = (GhostDictionary[BoneNames.右ひざ].ghost, enabled);
+            if (GhostDictionary.Keys.Contains(BoneNames.右足首))
+                GhostDictionary[BoneNames.右足首] = (GhostDictionary[BoneNames.右足首].ghost, enabled);
         }
     }
 }
