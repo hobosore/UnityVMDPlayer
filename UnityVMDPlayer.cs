@@ -48,7 +48,7 @@ public class UnityVMDPlayer : MonoBehaviour
     Quaternion originalParentLocalRotation;
     FootIK leftFootIK;
     FootIK rightFootIK;
-    CenterAnimation centerIK;
+    CenterAnimation centerAnimation;
     VMDReader vmdReader;
     BoneGhost boneGhost;
 
@@ -259,13 +259,10 @@ public class UnityVMDPlayer : MonoBehaviour
         InterpolateUpperBody(frameNumber);
 
         //センター
-        if (centerIK != null) { centerIK.Animate(frameNumber); }
-
-        //センターの補間
-        if (centerIK != null) { centerIK.Interpolate(frameNumber); }
+        if (centerAnimation != null) { centerAnimation.AnimateAndInterpolate(frameNumber); }
 
         //下半身の補完
-        if (centerIK != null) { centerIK.Complement(frameNumber); }
+        if (centerAnimation != null) { centerAnimation.Complement(frameNumber); }
 
         //足IKを動かす
         //当該フレームで足IKの実値があったかどうか
@@ -299,7 +296,7 @@ public class UnityVMDPlayer : MonoBehaviour
         if (leftFootIK != null) { boneGhost.SetLeftFootGhostEnable(!leftFootIK.Enable); }
         if (rightFootIK != null) { boneGhost.SetRightFootGhostEnable(!rightFootIK.Enable); }
     }
-    
+
     void OnDrawGizmosSelected()
     {
         Animator = GetComponent<Animator>();
@@ -360,13 +357,13 @@ public class UnityVMDPlayer : MonoBehaviour
         }
 
         this.vmdReader = vmdReader;
-        boneGhost = new BoneGhost(Animator, boneTransformDictionary); 
+        boneGhost = new BoneGhost(Animator, boneTransformDictionary);
 
         //frame = 0において初期化
-        centerIK = null;
+        centerAnimation = null;
         leftFootIK = null;
         rightFootIK = null;
-        centerIK = new CenterAnimation(vmdReader, Animator, boneGhost);
+        centerAnimation = new CenterAnimation(vmdReader, Animator, boneGhost);
         AnimateUpperBody(frameNumber);
         leftFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.LeftFoot, LeftFootOffset);
         rightFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.RightFoot, RightFootOffset);
@@ -406,9 +403,8 @@ public class UnityVMDPlayer : MonoBehaviour
         this.frameNumber = frameNumber;
         AnimateUpperBody(frameNumber);
         InterpolateUpperBody(frameNumber);
-        if (centerIK != null) { centerIK.Animate(frameNumber); }
-        if (centerIK != null) { centerIK.Interpolate(frameNumber); }
-        if (centerIK != null) { centerIK.Complement(frameNumber); }
+        if (centerAnimation != null) { centerAnimation.AnimateAndInterpolate(frameNumber); }
+        if (centerAnimation != null) { centerAnimation.Complement(frameNumber); }
         bool leftFootIKExists = false;
         bool rightFootIKExists = false;
         if (leftFootIK != null) { leftFootIKExists = leftFootIK.IK(frameNumber); }
@@ -425,7 +421,7 @@ public class UnityVMDPlayer : MonoBehaviour
             InterpolateLowerBody(frameNumber, leftLowerBoneTransformDictionary);
             InterpolateLowerBody(frameNumber, rightLowerBoneTransformDictionary);
         }
-        boneGhost.GhostAll(); 
+        boneGhost.GhostAll();
     }
 
     void AnimateParentOfAll()
@@ -666,123 +662,51 @@ public class UnityVMDPlayer : MonoBehaviour
             this.boneGhost = boneGhost;
         }
 
-        public void Animate(int frameNumber)
+        public void AnimateAndInterpolate(int frameNumber)
         {
+            if (!boneGhost.GhostDictionary.Keys.Contains(BoneNames.センター)
+                || !boneGhost.GhostDictionary[BoneNames.センター].enabled
+                || boneGhost.GhostDictionary[BoneNames.センター].ghost == null)
+            { return; }
+
             //センター、グルーブの処理を行う
             VMD.BoneKeyFrame centerVMDBoneFrame = VMDReader.GetBoneKeyFrame(centerBoneName, frameNumber);
             VMD.BoneKeyFrame grooveVMDBoneFrame = VMDReader.GetBoneKeyFrame(grooveBoneName, frameNumber);
 
-            if (boneGhost.GhostDictionary.Keys.Contains(BoneNames.センター)
-            && boneGhost.GhostDictionary[BoneNames.センター].enabled
-            && boneGhost.GhostDictionary[BoneNames.センター].ghost != null)
+            //初期化
+            boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition 
+                = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター];
+            boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation 
+                = Quaternion.identity;
+
+            if (centerVMDBoneFrame != null)
             {
-                if (centerVMDBoneFrame == null && grooveVMDBoneFrame == null) { return; }
-                else if (centerVMDBoneFrame != null && grooveVMDBoneFrame == null)
+                if (centerVMDBoneFrame.Position != Vector3.zero)
                 {
-                    if (centerVMDBoneFrame.Position != Vector3.zero)
-                    {
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター] + centerVMDBoneFrame.Position * DefaultBoneAmplifier;
-                    }
-                    if (centerVMDBoneFrame.Rotation != ZeroQuaternion)
-                    {
-                        //Ghostは正規化されている
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity.PlusRotation(centerVMDBoneFrame.Rotation);
-                    }
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition
+                        += centerVMDBoneFrame.Position * DefaultBoneAmplifier;
                 }
-                else if (centerVMDBoneFrame == null && grooveVMDBoneFrame != null)
+                if (centerVMDBoneFrame.Rotation != ZeroQuaternion)
                 {
-                    if (grooveVMDBoneFrame.Position != Vector3.zero)
-                    {
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター] + grooveVMDBoneFrame.Position * DefaultBoneAmplifier;
-                    }
-                    if (grooveVMDBoneFrame.Rotation != ZeroQuaternion)
-                    {
-                        //Ghostは正規化されている
-                        hips.localRotation = Quaternion.identity.PlusRotation(grooveVMDBoneFrame.Rotation);
-                    }
-                }
-                else
-                {
-                    if (centerVMDBoneFrame.Position != Vector3.zero && grooveVMDBoneFrame.Position != Vector3.zero)
-                    {
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター] + centerVMDBoneFrame.Position * DefaultBoneAmplifier + grooveVMDBoneFrame.Position * DefaultBoneAmplifier;
-                    }
-                    else if (centerVMDBoneFrame.Position != Vector3.zero && grooveVMDBoneFrame.Position == Vector3.zero)
-                    {
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター] + centerVMDBoneFrame.Position;
-                    }
-                    else if (centerVMDBoneFrame.Position == Vector3.zero && grooveVMDBoneFrame.Position != Vector3.zero)
-                    {
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター] + grooveVMDBoneFrame.Position;
-                    }
-
-
-                    if (centerVMDBoneFrame.Rotation != ZeroQuaternion && grooveVMDBoneFrame.Rotation != ZeroQuaternion)
-                    {
-                        //Ghostは正規化されている
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity.PlusRotation(centerVMDBoneFrame.Rotation).PlusRotation(grooveVMDBoneFrame.Rotation);
-                    }
-                    else if (centerVMDBoneFrame.Rotation != ZeroQuaternion && grooveVMDBoneFrame.Rotation == ZeroQuaternion)
-                    {
-                        //Ghostは正規化されている
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity.PlusRotation(centerVMDBoneFrame.Rotation);
-                    }
-                    else if (centerVMDBoneFrame.Rotation == ZeroQuaternion && grooveVMDBoneFrame.Rotation != ZeroQuaternion)
-                    {
-                        //Ghostは正規化されている
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity.PlusRotation(grooveVMDBoneFrame.Rotation);
-                    }
+                    //Ghostは正規化されている
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        .PlusRotation(centerVMDBoneFrame.Rotation);
                 }
             }
-        }
-
-        public void Interpolate(int frameNumber)
-        {
-            VMDReader.BoneKeyFrameGroup centerVMDBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(centerBoneName);
-            VMDReader.BoneKeyFrameGroup grooveVMDBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(grooveBoneName);
-
-            VMD.BoneKeyFrame centerLastPositionVMDBoneFrame = centerVMDBoneFrameGroup.LastPositionKeyFrame;
-            VMD.BoneKeyFrame centerLastRotationVMDBoneFrame = centerVMDBoneFrameGroup.LastRotationKeyFrame;
-            VMD.BoneKeyFrame centerNextPositionVMDBoneFrame = centerVMDBoneFrameGroup.NextPositionKeyFrame;
-            VMD.BoneKeyFrame centerNextRotationVMDBoneFrame = centerVMDBoneFrameGroup.NextRotationKeyFrame;
-
-            VMD.BoneKeyFrame grooveLastPositionVMDBoneFrame = grooveVMDBoneFrameGroup.LastPositionKeyFrame;
-            VMD.BoneKeyFrame grooveLastRotationVMDBoneFrame = grooveVMDBoneFrameGroup.LastRotationKeyFrame;
-            VMD.BoneKeyFrame grooveNextPositionVMDBoneFrame = grooveVMDBoneFrameGroup.NextPositionKeyFrame;
-            VMD.BoneKeyFrame grooveNextRotationVMDBoneFrame = grooveVMDBoneFrameGroup.NextRotationKeyFrame;
-
-            bool canInterpolateCenterPosition = (centerNextPositionVMDBoneFrame != null && centerLastPositionVMDBoneFrame != null);
-            bool canInterpolateCenterRotation = (centerNextRotationVMDBoneFrame != null && centerLastRotationVMDBoneFrame != null);
-            bool canInterpolateGroovePosition = (grooveNextPositionVMDBoneFrame != null && grooveLastPositionVMDBoneFrame != null);
-            bool canInterpolateGrooveRotation = (grooveNextRotationVMDBoneFrame != null && grooveLastRotationVMDBoneFrame != null);
-
-            if (boneGhost.GhostDictionary.Keys.Contains(BoneNames.センター)
-            && boneGhost.GhostDictionary[BoneNames.センター].enabled
-            && boneGhost.GhostDictionary[BoneNames.センター].ghost != null)
+            else
             {
-                if (canInterpolateCenterPosition && canInterpolateGroovePosition)
-                {
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター];
+                VMDReader.BoneKeyFrameGroup centerVMDBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(centerBoneName);
 
-                    float xCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-                    float yCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-                    float zCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-                    float xCenterInterpolation = Mathf.Lerp(centerLastPositionVMDBoneFrame.Position.x, centerNextPositionVMDBoneFrame.Position.x, xCenterInterpolationRate);
-                    float yCenterInterpolation = Mathf.Lerp(centerLastPositionVMDBoneFrame.Position.y, centerNextPositionVMDBoneFrame.Position.y, yCenterInterpolationRate);
-                    float zCenterInterpolation = Mathf.Lerp(centerLastPositionVMDBoneFrame.Position.z, centerNextPositionVMDBoneFrame.Position.z, zCenterInterpolationRate);
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += new Vector3(xCenterInterpolation, yCenterInterpolation, zCenterInterpolation) * DefaultBoneAmplifier;
+                VMD.BoneKeyFrame centerLastPositionVMDBoneFrame = centerVMDBoneFrameGroup.LastPositionKeyFrame;
+                VMD.BoneKeyFrame centerLastRotationVMDBoneFrame = centerVMDBoneFrameGroup.LastRotationKeyFrame;
+                VMD.BoneKeyFrame centerNextPositionVMDBoneFrame = centerVMDBoneFrameGroup.NextPositionKeyFrame;
+                VMD.BoneKeyFrame centerNextRotationVMDBoneFrame = centerVMDBoneFrameGroup.NextRotationKeyFrame;
 
-                    float xGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-                    float yGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-                    float zGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
-                    float xGrooveInterpolation = Mathf.Lerp(grooveLastPositionVMDBoneFrame.Position.x, grooveNextPositionVMDBoneFrame.Position.x, xGrooveInterpolationRate);
-                    float yGrooveInterpolation = Mathf.Lerp(grooveLastPositionVMDBoneFrame.Position.y, grooveNextPositionVMDBoneFrame.Position.y, yGrooveInterpolationRate);
-                    float zGrooveInterpolation = Mathf.Lerp(grooveLastPositionVMDBoneFrame.Position.z, grooveNextPositionVMDBoneFrame.Position.z, zGrooveInterpolationRate);
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += new Vector3(xGrooveInterpolation, yGrooveInterpolation, zGrooveInterpolation) * DefaultBoneAmplifier;
-                }
-                else if (canInterpolateCenterPosition && !canInterpolateGroovePosition)
+                bool canInterpolateCenterPosition = (centerNextPositionVMDBoneFrame != null && centerLastPositionVMDBoneFrame != null);
+                bool canInterpolateCenterRotation = (centerNextRotationVMDBoneFrame != null && centerLastRotationVMDBoneFrame != null);
+
+                if (canInterpolateCenterPosition)
                 {
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター];
                     float xCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
                     float yCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
                     float zCenterInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, centerVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
@@ -791,9 +715,52 @@ public class UnityVMDPlayer : MonoBehaviour
                     float zCenterInterpolation = Mathf.Lerp(centerLastPositionVMDBoneFrame.Position.z, centerNextPositionVMDBoneFrame.Position.z, zCenterInterpolationRate);
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += new Vector3(xCenterInterpolation, yCenterInterpolation, zCenterInterpolation) * DefaultBoneAmplifier;
                 }
-                else if (!canInterpolateCenterPosition && canInterpolateGroovePosition)
+                else if(centerLastPositionVMDBoneFrame != null)
                 {
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター];
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += centerLastPositionVMDBoneFrame.Position * DefaultBoneAmplifier;
+                }
+
+                if (canInterpolateCenterRotation)
+                {
+                    float centerRotationInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, centerVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        .PlusRotation(Quaternion.Lerp(centerLastRotationVMDBoneFrame.Rotation, centerNextRotationVMDBoneFrame.Rotation, centerRotationInterpolationRate));
+                }
+                else if (centerLastRotationVMDBoneFrame != null)
+                {
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        .PlusRotation(centerLastRotationVMDBoneFrame.Rotation);
+                }
+            }
+
+            if (grooveVMDBoneFrame != null)
+            {
+                if (grooveVMDBoneFrame.Position != Vector3.zero)
+                {
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition
+                        += grooveVMDBoneFrame.Position * DefaultBoneAmplifier;
+                }
+                if (grooveVMDBoneFrame.Rotation != ZeroQuaternion)
+                {
+                    //Ghostは正規化されている
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        .PlusRotation(grooveVMDBoneFrame.Rotation);
+                }
+            }
+            else
+            {
+                VMDReader.BoneKeyFrameGroup grooveVMDBoneFrameGroup = VMDReader.GetBoneKeyFrameGroup(grooveBoneName);
+
+                VMD.BoneKeyFrame grooveLastPositionVMDBoneFrame = grooveVMDBoneFrameGroup.LastPositionKeyFrame;
+                VMD.BoneKeyFrame grooveLastRotationVMDBoneFrame = grooveVMDBoneFrameGroup.LastRotationKeyFrame;
+                VMD.BoneKeyFrame grooveNextPositionVMDBoneFrame = grooveVMDBoneFrameGroup.NextPositionKeyFrame;
+                VMD.BoneKeyFrame grooveNextRotationVMDBoneFrame = grooveVMDBoneFrameGroup.NextRotationKeyFrame;
+
+                bool canInterpolateGroovePosition = (grooveNextPositionVMDBoneFrame != null && grooveLastPositionVMDBoneFrame != null);
+                bool canInterpolateGrooveRotation = (grooveNextRotationVMDBoneFrame != null && grooveLastRotationVMDBoneFrame != null);
+
+                if (canInterpolateGroovePosition)
+                {
                     float xGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
                     float yGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
                     float zGrooveInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, grooveVMDBoneFrameGroup.LastPositionKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextPositionKeyFrame.FrameNumber);
@@ -802,26 +769,21 @@ public class UnityVMDPlayer : MonoBehaviour
                     float zGrooveInterpolation = Mathf.Lerp(grooveLastPositionVMDBoneFrame.Position.z, grooveNextPositionVMDBoneFrame.Position.z, zGrooveInterpolationRate);
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += new Vector3(xGrooveInterpolation, yGrooveInterpolation, zGrooveInterpolation) * DefaultBoneAmplifier;
                 }
+                else if (grooveLastPositionVMDBoneFrame != null)
+                {
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += grooveLastPositionVMDBoneFrame.Position * DefaultBoneAmplifier;
+                }
 
-                if (canInterpolateCenterRotation && canInterpolateGrooveRotation)
+                if (canInterpolateGrooveRotation)
                 {
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity;
-                    float centerRotationInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, centerVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation.PlusRotation(Quaternion.Lerp(centerLastRotationVMDBoneFrame.Rotation, centerNextRotationVMDBoneFrame.Rotation, centerRotationInterpolationRate));
                     float grooveRotationInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, grooveVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation.PlusRotation(Quaternion.Lerp(grooveLastRotationVMDBoneFrame.Rotation, grooveNextRotationVMDBoneFrame.Rotation, grooveRotationInterpolationRate));
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        .PlusRotation(Quaternion.Lerp(grooveLastRotationVMDBoneFrame.Rotation, grooveNextRotationVMDBoneFrame.Rotation, grooveRotationInterpolationRate));
                 }
-                else if (canInterpolateCenterRotation && !canInterpolateGrooveRotation)
+                else if (grooveLastRotationVMDBoneFrame != null)
                 {
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity;
-                    float centerRotationInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, centerVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation.PlusRotation(Quaternion.Lerp(centerLastRotationVMDBoneFrame.Rotation, centerNextRotationVMDBoneFrame.Rotation, centerRotationInterpolationRate));
-                }
-                else if (!canInterpolateCenterRotation && canInterpolateGrooveRotation)
-                {
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity;
-                    float grooveRotationInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, grooveVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation.PlusRotation(Quaternion.Lerp(grooveLastRotationVMDBoneFrame.Rotation, grooveNextRotationVMDBoneFrame.Rotation, grooveRotationInterpolationRate));
+                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        .PlusRotation(grooveLastRotationVMDBoneFrame.Rotation);
                 }
             }
         }
@@ -906,7 +868,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
         Dictionary<Transform, Quaternion> boneOriginalRotationDictionary;
         Dictionary<Transform, Quaternion> boneOriginalLocalRotationDictionary;
-         
+
         public Transform Target { get; private set; }
         private BoneNames footBoneName;
         private Vector3 firstLocalPosition;
@@ -1025,7 +987,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
             FootTransform.localRotation = boneOriginalLocalRotationDictionary[FootTransform];
 
-            Vector3 moveVector = footIKFrame.Position ;
+            Vector3 moveVector = footIKFrame.Position;
 
             Target.localPosition = firstLocalPosition + (moveVector * DefaultBoneAmplifier) + Offset;
 
