@@ -172,11 +172,11 @@ public class UnityVMDPlayer : MonoBehaviour
         if (rightFootIK != null) { rightFootIK.InterpolateIK(FrameNumber); }
 
         //Ghost
-        boneGhost.GhostAll();
+        if (boneGhost != null) { boneGhost.GhostAll(); } 
 
         //足IKを使うかどうかを更新
-        if (leftFootIK != null) { boneGhost.SetLeftFootGhostEnable(!leftFootIK.Enable); }
-        if (rightFootIK != null) { boneGhost.SetRightFootGhostEnable(!rightFootIK.Enable); }
+        if (leftFootIK != null && boneGhost != null) { boneGhost.SetLeftFootGhostEnable(!leftFootIK.Enable); }
+        if (rightFootIK != null && boneGhost != null) { boneGhost.SetRightFootGhostEnable(!rightFootIK.Enable); }
     }
 
     void OnDrawGizmosSelected()
