@@ -1084,9 +1084,9 @@ public class UnityVMDPlayer : MonoBehaviour
                 }
             }
 
-            //足についてはIKがやってくれるはず
+            //足についてはIKがデフォルトでオンなのでやってくれるはず
             SetLeftFootGhostEnable(false);
-            SetRightFootGhostEnable(true);
+            SetRightFootGhostEnable(false);
         }
 
         public void GhostAll()
