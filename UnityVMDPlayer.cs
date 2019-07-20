@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
@@ -642,9 +642,6 @@ public class UnityVMDPlayer : MonoBehaviour
     //Unityにない下半身ボーンの処理もここで行う
     class CenterAnimation
     {
-        //センターでは回転情報なしは0,0,0,0ではなく0,0,0,1である
-        readonly Quaternion ZeroQuaternion = Quaternion.identity;
-
         BoneNames centerBoneName = BoneNames.センター;
         BoneNames grooveBoneName = BoneNames.グルーブ;
 
@@ -674,9 +671,9 @@ public class UnityVMDPlayer : MonoBehaviour
             VMD.BoneKeyFrame grooveVMDBoneFrame = VMDReader.GetBoneKeyFrame(grooveBoneName, frameNumber);
 
             //初期化
-            boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition 
+            boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition
                 = boneGhost.OriginalGhostLocalPositionDictionary[BoneNames.センター];
-            boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation 
+            boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
                 = Quaternion.identity;
 
             if (centerVMDBoneFrame != null)
@@ -686,7 +683,7 @@ public class UnityVMDPlayer : MonoBehaviour
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition
                         += centerVMDBoneFrame.Position * DefaultBoneAmplifier;
                 }
-                if (centerVMDBoneFrame.Rotation != ZeroQuaternion)
+                if (centerVMDBoneFrame.Rotation != Quaternion.identity)
                 {
                     //Ghostは正規化されている
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
@@ -715,7 +712,7 @@ public class UnityVMDPlayer : MonoBehaviour
                     float zCenterInterpolation = Mathf.Lerp(centerLastPositionVMDBoneFrame.Position.z, centerNextPositionVMDBoneFrame.Position.z, zCenterInterpolationRate);
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += new Vector3(xCenterInterpolation, yCenterInterpolation, zCenterInterpolation) * DefaultBoneAmplifier;
                 }
-                else if(centerLastPositionVMDBoneFrame != null)
+                else if (centerLastPositionVMDBoneFrame != null)
                 {
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += centerLastPositionVMDBoneFrame.Position * DefaultBoneAmplifier;
                 }
@@ -740,7 +737,7 @@ public class UnityVMDPlayer : MonoBehaviour
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition
                         += grooveVMDBoneFrame.Position * DefaultBoneAmplifier;
                 }
-                if (grooveVMDBoneFrame.Rotation != ZeroQuaternion)
+                if (grooveVMDBoneFrame.Rotation != Quaternion.identity)
                 {
                     //Ghostは正規化されている
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
