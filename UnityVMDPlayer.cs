@@ -642,6 +642,9 @@ public class UnityVMDPlayer : MonoBehaviour
     //Unityにない下半身ボーンの処理もここで行う
     class CenterAnimation
     {
+        //センターでは回転情報なしは0,0,0,0ではなく0,0,0,1である
+        readonly Quaternion ZeroQuaternion = Quaternion.identity;
+
         BoneNames centerBoneName = BoneNames.センター;
         BoneNames grooveBoneName = BoneNames.グルーブ;
 
@@ -683,7 +686,7 @@ public class UnityVMDPlayer : MonoBehaviour
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition
                         += centerVMDBoneFrame.Position * DefaultBoneAmplifier;
                 }
-                if (centerVMDBoneFrame.Rotation != Quaternion.identity)
+                if (centerVMDBoneFrame.Rotation != ZeroQuaternion)
                 {
                     //Ghostは正規化されている
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
@@ -737,7 +740,7 @@ public class UnityVMDPlayer : MonoBehaviour
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition
                         += grooveVMDBoneFrame.Position * DefaultBoneAmplifier;
                 }
-                if (grooveVMDBoneFrame.Rotation != Quaternion.identity)
+                if (grooveVMDBoneFrame.Rotation != ZeroQuaternion)
                 {
                     //Ghostは正規化されている
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
