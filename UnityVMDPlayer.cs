@@ -172,7 +172,7 @@ public class UnityVMDPlayer : MonoBehaviour
         if (rightFootIK != null) { rightFootIK.InterpolateIK(FrameNumber); }
 
         //Ghost
-        if (boneGhost != null) { boneGhost.GhostAll(); } 
+        if (boneGhost != null) { boneGhost.GhostAll(); }
 
         //足IKを使うかどうかを更新
         if (leftFootIK != null && boneGhost != null) { boneGhost.SetLeftFootGhostEnable(!leftFootIK.Enable); }
@@ -213,6 +213,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
     public void Play()
     {
+        IsEnd = false;
         IsPlaying = true;
     }
 
@@ -342,7 +343,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
     class UpperBodyAnimation
     {
-        Quaternion ZeroQuaternion = new Quaternion(0,0,0,0);
+        Quaternion ZeroQuaternion = new Quaternion(0, 0, 0, 0);
 
         Dictionary<BoneNames, (Transform, float)> upperBoneTransformDictionary;
         Dictionary<BoneNames, Vector3> upperBoneOriginalPositions;
