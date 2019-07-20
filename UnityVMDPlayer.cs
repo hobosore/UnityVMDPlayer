@@ -13,9 +13,6 @@ public class UnityVMDPlayer : MonoBehaviour
     public int FrameNumber { get; private set; } = 0;
     //モーション終了時に実行させる
     Action endAction = () => { };
-    public bool IsLoop = false;
-    //全ての親はデフォルトでオン
-    public bool UseParentOfAll = true;
     //デフォルトは30fps、垂直同期は切らないと重いことがある?
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
     const float FPSs = 0.03333f;
@@ -44,6 +41,9 @@ public class UnityVMDPlayer : MonoBehaviour
     BoneGhost boneGhost;
 
     //以下はインスペクタにて設定
+    public bool IsLoop = false;
+    //全ての親はデフォルトでオン
+    public bool UseParentOfAll = true;
     public Transform LeftUpperArmTwist;
     public Transform RightUpperArmTwist;
     //VMDファイルのパスを与えて再生するまでオフセットは更新されない
