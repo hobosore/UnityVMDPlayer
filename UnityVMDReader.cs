@@ -220,7 +220,7 @@ namespace UnityVMDReader
             }
             VMD.FaceKeyFrame GetKeyFrameUsingCash(int frameNumber)
             {
-                if(NextMorphKeyFrame == null)
+                if (NextMorphKeyFrame == null)
                 {
                     return null;
                 }
@@ -300,7 +300,7 @@ namespace UnityVMDReader
             foreach (VMD.FaceKeyFrame faceKeyFrame in RawVMD.FaceKeyFrames)
             {
                 string morphName = faceKeyFrame.MorphName;
-                if(morphName == null) { continue; }
+                if (morphName == null) { continue; }
                 if (!FaceKeyFrameGroups.Keys.Contains(morphName))
                 {
                     FaceKeyFrameGroups.Add(morphName, new FaceKeyFrameGroup(faceKeyFrame.MorphName));

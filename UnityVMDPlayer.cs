@@ -1138,7 +1138,11 @@ public class UnityVMDPlayer : MonoBehaviour
     {
         VMDReader vmdReader;
         List<SkinnedMeshRenderer> skinnedMeshRendererList;
+        //キーはunity上のモーフ名
         Dictionary<string, MorphDriver> morphDrivers = new Dictionary<string, MorphDriver>();
+        //vmd上はまばたきというモーフ名でも、unity上では1.まばたきなどありうるので変換
+        //unity上のモーフ名でvmd上のモーフ名を含むものを探す
+        Dictionary<string, string> unityVMDMorphNameDictionary = new Dictionary<string, string>();
 
         public MorphPlayer(Transform model, VMDReader vmdReader)
         {
@@ -1174,7 +1178,24 @@ public class UnityVMDPlayer : MonoBehaviour
                 int morphCount = skinnedMeshRenderer.sharedMesh.blendShapeCount;
                 for (int i = 0; i < morphCount; i++)
                 {
-                    morphDrivers.Add(skinnedMeshRenderer.sharedMesh.GetBlendShapeName(i), new MorphDriver(skinnedMeshRenderer, i));
+                    string unityMorphName = skinnedMeshRenderer.sharedMesh.GetBlendShapeName(i);
+                    string vmdMorphName = unityMorphName;
+                    //モーフ名に重複があれば2コ目以降は無視
+                    if (morphDrivers.Keys.Contains(unityMorphName)){ continue; }
+                    //vmd上はまばたきというモーフ名でも、unity上では1.まばたきなどありうるので
+                    //unity上のモーフ名でvmd上のモーフ名を含むものを探す
+                    if (!vmdReader.FaceKeyFrameGroups.Keys.Contains(unityMorphName))
+                    {
+                        string[] vmdMorphNames =
+                            (from morphName in vmdReader.FaceKeyFrameGroups.Keys where unityMorphName.Contains(morphName) select morphName).ToArray();
+                        if (vmdMorphNames == null) { continue; }
+                        //0,or2コ以上あるとどれがどれかわからない
+                        if (!(vmdMorphNames.Length == 1)) { continue; }
+                        vmdMorphName = vmdMorphNames[0];
+                    }
+
+                    morphDrivers.Add(unityMorphName, new MorphDriver(skinnedMeshRenderer, i));
+                    unityVMDMorphNameDictionary.Add(unityMorphName, vmdMorphName);
                 }
             }
         }
@@ -1183,8 +1204,9 @@ public class UnityVMDPlayer : MonoBehaviour
         {
             foreach (string morphName in morphDrivers.Keys)
             {
-                if (!vmdReader.FaceKeyFrameGroups.Keys.Contains(morphName)) { continue; }
-                VMDReader.FaceKeyFrameGroup faceKeyFrameGroup = vmdReader.FaceKeyFrameGroups[morphName];
+                //含まれないものは除外しているはずだが一応
+                if (!vmdReader.FaceKeyFrameGroups.Keys.Contains(unityVMDMorphNameDictionary[morphName])) { continue; }
+                VMDReader.FaceKeyFrameGroup faceKeyFrameGroup = vmdReader.FaceKeyFrameGroups[unityVMDMorphNameDictionary[morphName]];
                 VMD.FaceKeyFrame faceKeyFrame = faceKeyFrameGroup.GetKeyFrame(frameNumber);
                 if (faceKeyFrame != null)
                 {
