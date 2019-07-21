@@ -1181,7 +1181,6 @@ public class UnityVMDPlayer : MonoBehaviour
 
         public void Morph(int frameNumber)
         {
-            Debug.Log(frameNumber);
             foreach (string morphName in morphDrivers.Keys)
             {
                 if (!vmdReader.FaceKeyFrameGroups.Keys.Contains(morphName)) { continue; }
@@ -1189,7 +1188,6 @@ public class UnityVMDPlayer : MonoBehaviour
                 VMD.FaceKeyFrame faceKeyFrame = faceKeyFrameGroup.GetKeyFrame(frameNumber);
                 if (faceKeyFrame != null)
                 {
-                    Debug.Log(morphName);
                     morphDrivers[morphName].Morph(faceKeyFrame.Weight);
                 }
                 else if (faceKeyFrameGroup.LastMorphKeyFrame != null && faceKeyFrameGroup.NextMorphKeyFrame != null)
