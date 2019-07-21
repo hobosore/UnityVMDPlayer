@@ -4,6 +4,7 @@ using System.Linq;
 using System;
 using UnityVMDReader;
 using static UnityVMDReader.VMDReader.BoneKeyFrameGroup;
+using System.Collections;
 
 public class UnityVMDPlayer : MonoBehaviour
 {
@@ -39,6 +40,7 @@ public class UnityVMDPlayer : MonoBehaviour
     FootIK rightFootIK;
     VMDReader vmdReader;
     BoneGhost boneGhost;
+    MorphPlayer morphPlayer;
 
     //以下はインスペクタにて設定
     public bool IsLoop = false;
@@ -147,8 +149,6 @@ public class UnityVMDPlayer : MonoBehaviour
             return;
         }
 
-        FrameNumber++;
-
         //全ての親を動かす
         if (UseParentOfAll) { AnimateParentOfAll(); }
         //全ての親の補間
@@ -174,9 +174,14 @@ public class UnityVMDPlayer : MonoBehaviour
         //Ghost
         if (boneGhost != null) { boneGhost.GhostAll(); }
 
+        //モーフ
+        if (morphPlayer != null) { morphPlayer.Morph(FrameNumber); }
+
         //足IKを使うかどうかを更新
         if (leftFootIK != null && boneGhost != null) { boneGhost.SetLeftFootGhostEnable(!leftFootIK.Enable); }
         if (rightFootIK != null && boneGhost != null) { boneGhost.SetRightFootGhostEnable(!rightFootIK.Enable); }
+
+        FrameNumber++;
     }
 
     void OnDrawGizmosSelected()
@@ -243,6 +248,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
         this.vmdReader = vmdReader;
         boneGhost = new BoneGhost(Animator, boneTransformDictionary);
+        morphPlayer = new MorphPlayer(transform, vmdReader);
         upperBodyAnimation = new UpperBodyAnimation(Animator, vmdReader, boneGhost, LeftUpperArmTwist, RightUpperArmTwist);
         centerAnimation = new CenterAnimation(vmdReader, Animator, boneGhost);
         centerAnimation.AnimateAndInterpolate(FrameNumber);
@@ -255,6 +261,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
     public void Play(VMDReader vmdReader, int frameNumber)
     {
+        if (frameNumber < 0) { frameNumber = 0; }
         this.FrameNumber = frameNumber;
         Play(vmdReader);
     }
@@ -286,6 +293,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
     public void JumpToFrame(int frameNumber)
     {
+        if (frameNumber < 0) { frameNumber = 0; }
         this.FrameNumber = frameNumber;
         if (UseParentOfAll) { AnimateParentOfAll(); }
         if (UseParentOfAll) { InterpolateParentOfAll(); }
@@ -298,6 +306,7 @@ public class UnityVMDPlayer : MonoBehaviour
         if (leftFootIK != null) { leftFootIK.InterpolateIK(frameNumber); }
         if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
         if (boneGhost != null) { boneGhost.GhostAll(); }
+        if (morphPlayer != null) { morphPlayer.Morph(frameNumber); }
     }
 
     void AnimateParentOfAll()
@@ -1122,6 +1131,105 @@ public class UnityVMDPlayer : MonoBehaviour
                 GhostDictionary[BoneNames.右ひざ] = (GhostDictionary[BoneNames.右ひざ].ghost, enabled);
             if (GhostDictionary.Keys.Contains(BoneNames.右足首))
                 GhostDictionary[BoneNames.右足首] = (GhostDictionary[BoneNames.右足首].ghost, enabled);
+        }
+    }
+
+    class MorphPlayer
+    {
+        VMDReader vmdReader;
+        List<SkinnedMeshRenderer> skinnedMeshRendererList;
+        Dictionary<string, MorphDriver> morphDrivers = new Dictionary<string, MorphDriver>();
+
+        public MorphPlayer(Transform model, VMDReader vmdReader)
+        {
+            this.vmdReader = vmdReader;
+
+            List<SkinnedMeshRenderer> searchBlendShapeSkins(Transform t)
+            {
+                List<SkinnedMeshRenderer> skinnedMeshRendererList = new List<SkinnedMeshRenderer>();
+                Queue queue = new Queue();
+                queue.Enqueue(t);
+                while (queue.Count != 0)
+                {
+                    SkinnedMeshRenderer skinnedMeshRenderer = (queue.Peek() as Transform).GetComponent<SkinnedMeshRenderer>();
+
+                    if (skinnedMeshRenderer != null && skinnedMeshRenderer.sharedMesh.blendShapeCount != 0)
+                    {
+                        skinnedMeshRendererList.Add(skinnedMeshRenderer);
+                    }
+
+                    foreach (Transform childT in (queue.Dequeue() as Transform))
+                    {
+                        queue.Enqueue(childT);
+                    }
+                }
+
+                return skinnedMeshRendererList;
+            }
+
+            skinnedMeshRendererList = searchBlendShapeSkins(model);
+
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRendererList)
+            {
+                int morphCount = skinnedMeshRenderer.sharedMesh.blendShapeCount;
+                for (int i = 0; i < morphCount; i++)
+                {
+                    morphDrivers.Add(skinnedMeshRenderer.sharedMesh.GetBlendShapeName(i), new MorphDriver(skinnedMeshRenderer, i));
+                }
+            }
+        }
+
+        public void Morph(int frameNumber)
+        {
+            Debug.Log(frameNumber);
+            foreach (string morphName in morphDrivers.Keys)
+            {
+                if (!vmdReader.FaceKeyFrameGroups.Keys.Contains(morphName)) { continue; }
+                VMDReader.FaceKeyFrameGroup faceKeyFrameGroup = vmdReader.FaceKeyFrameGroups[morphName];
+                VMD.FaceKeyFrame faceKeyFrame = faceKeyFrameGroup.GetKeyFrame(frameNumber);
+                if (faceKeyFrame != null)
+                {
+                    Debug.Log(morphName);
+                    morphDrivers[morphName].Morph(faceKeyFrame.Weight);
+                }
+                else if (faceKeyFrameGroup.LastMorphKeyFrame != null && faceKeyFrameGroup.NextMorphKeyFrame != null)
+                {
+                    float rate =
+                        (faceKeyFrameGroup.NextMorphKeyFrame.FrameNumber - frameNumber) * faceKeyFrameGroup.LastMorphKeyFrame.Weight
+                        + (frameNumber - faceKeyFrameGroup.LastMorphKeyFrame.FrameNumber) * faceKeyFrameGroup.NextMorphKeyFrame.Weight;
+                    rate /= faceKeyFrameGroup.NextMorphKeyFrame.FrameNumber - faceKeyFrameGroup.LastMorphKeyFrame.FrameNumber;
+                    morphDrivers[morphName].Morph(rate);
+                }
+                else if (faceKeyFrameGroup.LastMorphKeyFrame != null && faceKeyFrameGroup.NextMorphKeyFrame == null)
+                {
+                    morphDrivers[morphName].Morph(faceKeyFrameGroup.LastMorphKeyFrame.Weight);
+                }
+                //全てがnullになることはないはずだが一応
+                else if (faceKeyFrameGroup.LastMorphKeyFrame == null && faceKeyFrameGroup.NextMorphKeyFrame != null)
+                {
+                    float rate = faceKeyFrameGroup.NextMorphKeyFrame.Weight * (frameNumber / faceKeyFrameGroup.NextMorphKeyFrame.FrameNumber);
+                    morphDrivers[morphName].Morph(rate);
+                }
+            }
+        }
+
+        class MorphDriver
+        {
+            const float MorphAmplifier = 100;
+
+            public SkinnedMeshRenderer SkinnedMeshRenderer { get; private set; }
+            public int MorphIndex { get; private set; }
+
+            public MorphDriver(SkinnedMeshRenderer skinnedMeshRenderer, int morphIndex)
+            {
+                SkinnedMeshRenderer = skinnedMeshRenderer;
+                MorphIndex = morphIndex;
+            }
+
+            public void Morph(float weightRate)
+            {
+                SkinnedMeshRenderer.SetBlendShapeWeight(MorphIndex, weightRate * MorphAmplifier);
+            }
         }
     }
 }

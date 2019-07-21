@@ -53,7 +53,7 @@ namespace UnityVMDReader
             //Rotationデータを保持したBoneKeyFramesのリスト
             public List<VMD.BoneKeyFrame> BoneRotationKeyFrames = new List<VMD.BoneKeyFrame>();
 
-            int frameNumberCash = -1;
+            int frameNumberCash = 0;
 
             public VMD.BoneKeyFrame CurrentKeyFrame { get; private set; }
             public VMD.BoneKeyFrame.Interpolation Interpolation { get; private set; }
@@ -79,7 +79,6 @@ namespace UnityVMDReader
                 frameNumberCash = frameNumber;
                 return GetKeyFrameWithoutCash(frameNumber);
             }
-
             private VMD.BoneKeyFrame GetKeyFrameUsingCash(int frameNumber)
             {
                 CurrentKeyFrame = BoneKeyFrames.Find(x => x.FrameNumber == frameNumber);
@@ -132,7 +131,6 @@ namespace UnityVMDReader
 
                 return CurrentKeyFrame;
             }
-
             private VMD.BoneKeyFrame GetKeyFrameWithoutCash(int frameNumber)
             {
                 CurrentKeyFrame = BoneKeyFrames.Find(x => x.FrameNumber == frameNumber);
@@ -193,12 +191,70 @@ namespace UnityVMDReader
             }
         }
 
+        public class FaceKeyFrameGroup
+        {
+            public string MorphName { get; private set; }
+            public List<VMD.FaceKeyFrame> FaceKeyFrames { get; private set; } = new List<VMD.FaceKeyFrame>();
+
+            int frameNumberCash = 0;
+
+            VMD.FaceKeyFrame CurrentMorphKeyFrame = null;
+            public VMD.FaceKeyFrame LastMorphKeyFrame = null;
+            public VMD.FaceKeyFrame NextMorphKeyFrame = null;
+
+            public FaceKeyFrameGroup(string morphName)
+            {
+                MorphName = morphName;
+            }
+
+            public VMD.FaceKeyFrame GetKeyFrame(int frameNumber)
+            {
+                if (frameNumber == frameNumberCash + 1)
+                {
+                    frameNumberCash = frameNumber;
+                    return GetKeyFrameUsingCash(frameNumber);
+                }
+
+                frameNumberCash = frameNumber;
+                return GetKeyFrameWithoutCash(frameNumber);
+            }
+            VMD.FaceKeyFrame GetKeyFrameUsingCash(int frameNumber)
+            {
+                if(NextMorphKeyFrame == null)
+                {
+                    return null;
+                }
+
+                if (frameNumber == NextMorphKeyFrame.FrameNumber)
+                {
+                    LastMorphKeyFrame = CurrentMorphKeyFrame;
+                    CurrentMorphKeyFrame = NextMorphKeyFrame;
+                    NextMorphKeyFrame = FaceKeyFrames.Find(x => x.FrameNumber > frameNumber);
+                    return CurrentMorphKeyFrame;
+                }
+
+                CurrentMorphKeyFrame = null;
+                return CurrentMorphKeyFrame;
+            }
+            VMD.FaceKeyFrame GetKeyFrameWithoutCash(int frameNumber)
+            {
+                CurrentMorphKeyFrame = FaceKeyFrames.FindLast(x => x.FrameNumber == frameNumber);
+                LastMorphKeyFrame = FaceKeyFrames.FindLast(x => x.FrameNumber < frameNumber);
+                NextMorphKeyFrame = FaceKeyFrames.Find(x => x.FrameNumber > frameNumber);
+
+                return CurrentMorphKeyFrame;
+            }
+        }
+
         public VMD RawVMD { get; private set; }
 
         public int FrameCount { get; private set; } = -1;
 
         //ボーンごとに分けたキーフレームの集合をボーンの番号順にリストに入れる、これはコンストラクタで初期化される
         public List<BoneKeyFrameGroup> BoneKeyFrameGroups = new List<BoneKeyFrameGroup>();
+
+        //表情ごとに分けたキーフレームの集合を表情の番号順にリストに入れる、これはコンストラクタで初期化される
+        public Dictionary<string, FaceKeyFrameGroup> FaceKeyFrameGroups = new Dictionary<string, FaceKeyFrameGroup>();
 
         void InitializeBoneKeyFrameGroups()
         {
@@ -230,15 +286,27 @@ namespace UnityVMDReader
                 if (!BoneKeyFrameGroup.StringBoneNames.Contains(boneKeyFrame.Name)) { continue; }
                 BoneKeyFrameGroups[BoneKeyFrameGroup.StringBoneNames.IndexOf(boneKeyFrame.Name)].AddKeyFrame(boneKeyFrame);
             }
-
             //いちおうフレームごとに並べておく
             BoneKeyFrameGroups.ForEach(x => x.OrderByFrame());
-
             //人ボーンのフレームが見当たらなかったらこれ以上しない
             if (BoneKeyFrameGroups.All(x => x.BoneKeyFrames.Count == 0)) { return; }
 
             //ついでに最終フレームも求めておく
             FrameCount = BoneKeyFrameGroups.Where(x => x.BoneKeyFrames.Count > 0).Max(x => x.BoneKeyFrames.Last().FrameNumber);
+
+            //全表情ボーンをフレームごとに並び替えておく
+            RawVMD.FaceKeyFrames.OrderBy(x => x.FrameNumber);
+            //表情ボーンのキーフレームをグループごとに分けてFaceKeyFrameGroupsに入れる
+            foreach (VMD.FaceKeyFrame faceKeyFrame in RawVMD.FaceKeyFrames)
+            {
+                string morphName = faceKeyFrame.MorphName;
+                if(morphName == null) { continue; }
+                if (!FaceKeyFrameGroups.Keys.Contains(morphName))
+                {
+                    FaceKeyFrameGroups.Add(morphName, new FaceKeyFrameGroup(faceKeyFrame.MorphName));
+                }
+                FaceKeyFrameGroups[morphName].FaceKeyFrames.Add(faceKeyFrame);
+            }
         }
 
         public BoneKeyFrameGroup GetBoneKeyFrameGroup(BoneKeyFrameGroup.BoneNames boneName)
@@ -379,7 +447,7 @@ namespace UnityVMDReader
             //表情モーフのウェイト
             public float Weight { get; private set; }
             //フレーム番号
-            public uint Frame { get; private set; }
+            public uint FrameNumber { get; private set; }
 
             public FaceKeyFrame() { }
             public FaceKeyFrame(Stream stream) { Read(stream); }
@@ -391,7 +459,7 @@ namespace UnityVMDReader
                 MorphName = System.Text.Encoding.GetEncoding("shift_jis").GetString(nameBytes);
                 //ヌル文字除去
                 MorphName = MorphName.TrimEnd('\0').TrimEnd('?').TrimEnd('\0');
-                Frame = binaryReader.ReadUInt32();
+                FrameNumber = binaryReader.ReadUInt32();
                 Weight = binaryReader.ReadSingle();
             }
         };
@@ -604,7 +672,7 @@ namespace UnityVMDReader
         //人ボーンのキーフレームのリスト
         public List<BoneKeyFrame> BoneKeyFrames = new List<BoneKeyFrame>();
         //表情モーフのキーフレームのリスト
-        public List<FaceKeyFrame> FaceFrames = new List<FaceKeyFrame>();
+        public List<FaceKeyFrame> FaceKeyFrames = new List<FaceKeyFrame>();
         //カメラのキーフレームのリスト
         public List<CameraKeyFrame> CameraFrames = new List<CameraKeyFrame>();
         //照明のキーフレームのリスト
@@ -653,9 +721,9 @@ namespace UnityVMDReader
                 int faceFrameCount = binaryReader.ReadInt32();
                 for (int i = 0; i < faceFrameCount; i++)
                 {
-                    FaceFrames.Add(new FaceKeyFrame(stream));
+                    FaceKeyFrames.Add(new FaceKeyFrame(stream));
                 }
-                FaceFrames = FaceFrames.OrderBy(x => x.Frame).ToList();
+                FaceKeyFrames = FaceKeyFrames.OrderBy(x => x.FrameNumber).ToList();
 
                 //カメラのキーフレームの読み込み
                 int cameraFrameCount = binaryReader.ReadInt32();
