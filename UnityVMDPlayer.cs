@@ -251,8 +251,6 @@ public class UnityVMDPlayer : MonoBehaviour
         morphPlayer = new MorphPlayer(transform, vmdReader);
         upperBodyAnimation = new UpperBodyAnimation(Animator, vmdReader, boneGhost, LeftUpperArmTwist, RightUpperArmTwist);
         centerAnimation = new CenterAnimation(vmdReader, Animator, boneGhost);
-        centerAnimation.AnimateAndInterpolate(FrameNumber);
-        upperBodyAnimation.AnimateUpperBody(FrameNumber);
         leftFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.LeftFoot, LeftFootOffset);
         rightFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.RightFoot, RightFootOffset);
 
@@ -355,8 +353,8 @@ public class UnityVMDPlayer : MonoBehaviour
         Quaternion ZeroQuaternion = new Quaternion(0, 0, 0, 0);
 
         Dictionary<BoneNames, (Transform, float)> upperBoneTransformDictionary;
-        Dictionary<BoneNames, Vector3> upperBoneOriginalPositions;
-        Dictionary<BoneNames, Quaternion> upperBoneOriginalRotations;
+        Dictionary<BoneNames, Vector3> upperBoneOriginalLocalPositions;
+        Dictionary<BoneNames, Quaternion> upperBoneOriginalLocalRotations;
 
         VMDReader vmdReader;
         BoneGhost boneGhost;
@@ -427,15 +425,15 @@ public class UnityVMDPlayer : MonoBehaviour
             }
 
             //モデルの初期ポーズを保存
-            upperBoneOriginalPositions = new Dictionary<BoneNames, Vector3>();
-            upperBoneOriginalRotations = new Dictionary<BoneNames, Quaternion>();
+            upperBoneOriginalLocalPositions = new Dictionary<BoneNames, Vector3>();
+            upperBoneOriginalLocalRotations = new Dictionary<BoneNames, Quaternion>();
             int count = VMDReader.BoneKeyFrameGroup.StringBoneNames.Count;
             for (int i = 0; i < count; i++)
             {
                 BoneNames boneName = (BoneNames)VMDReader.BoneKeyFrameGroup.StringBoneNames.IndexOf(VMDReader.BoneKeyFrameGroup.StringBoneNames[i]);
                 if (!upperBoneTransformDictionary.Keys.Contains(boneName) || upperBoneTransformDictionary[boneName].Item1 == null) { continue; }
-                upperBoneOriginalPositions.Add(boneName, upperBoneTransformDictionary[boneName].Item1.localPosition);
-                upperBoneOriginalRotations.Add(boneName, upperBoneTransformDictionary[boneName].Item1.localRotation);
+                upperBoneOriginalLocalPositions.Add(boneName, upperBoneTransformDictionary[boneName].Item1.localPosition);
+                upperBoneOriginalLocalRotations.Add(boneName, upperBoneTransformDictionary[boneName].Item1.localRotation);
             }
         }
 
@@ -512,8 +510,7 @@ public class UnityVMDPlayer : MonoBehaviour
     //Unityにない下半身ボーンの処理もここで行う
     class CenterAnimation
     {
-        //センターでは回転情報なしは0,0,0,0ではなく0,0,0,1である
-        readonly Quaternion ZeroQuaternion = Quaternion.identity;
+        readonly Quaternion ZeroQuaternion = new Quaternion(0,0,0,0);
 
         BoneNames centerBoneName = BoneNames.センター;
         BoneNames grooveBoneName = BoneNames.グルーブ;
@@ -1181,7 +1178,7 @@ public class UnityVMDPlayer : MonoBehaviour
                     string unityMorphName = skinnedMeshRenderer.sharedMesh.GetBlendShapeName(i);
                     string vmdMorphName = unityMorphName;
                     //モーフ名に重複があれば2コ目以降は無視
-                    if (morphDrivers.Keys.Contains(unityMorphName)){ continue; }
+                    if (morphDrivers.Keys.Contains(unityMorphName)) { continue; }
                     //vmd上はまばたきというモーフ名でも、unity上では1.まばたきなどありうるので
                     //unity上のモーフ名でvmd上のモーフ名を含むものを探す
                     if (!vmdReader.FaceKeyFrameGroups.Keys.Contains(unityMorphName))
