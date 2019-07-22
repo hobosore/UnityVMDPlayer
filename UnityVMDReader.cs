@@ -57,7 +57,7 @@ namespace UnityVMDReader
 
             public VMD.BoneKeyFrame CurrentKeyFrame { get; private set; }
             public VMD.BoneKeyFrame.Interpolation Interpolation { get; private set; }
-            public VMD.BoneKeyFrame LastKeyFrame { get; private set; }
+            public VMD.BoneKeyFrame NextKeyFrame { get; private set; }
             public VMD.BoneKeyFrame LastPositionKeyFrame { get; private set; }
             public VMD.BoneKeyFrame LastRotationKeyFrame { get; private set; }
             public VMD.BoneKeyFrame NextPositionKeyFrame { get; private set; }
@@ -96,33 +96,26 @@ namespace UnityVMDReader
                     NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.FrameNumber > frameNumber);
                 }
 
-                if (LastPositionKeyFrame == null && LastRotationKeyFrame == null)
+                if (NextPositionKeyFrame == null && NextRotationKeyFrame == null)
                 {
-                    if (CurrentKeyFrame != null)
-                    {
-                        LastKeyFrame = CurrentKeyFrame;
-                    }
+                    NextKeyFrame = null;
                 }
-                else if (LastPositionKeyFrame != null && LastRotationKeyFrame != null)
+                else if (NextPositionKeyFrame != null && NextRotationKeyFrame != null)
                 {
-                    LastKeyFrame = LastPositionKeyFrame.FrameNumber < LastRotationKeyFrame.FrameNumber ? LastRotationKeyFrame : LastPositionKeyFrame;
+                    NextKeyFrame = NextRotationKeyFrame.FrameNumber < NextPositionKeyFrame.FrameNumber ? NextRotationKeyFrame : NextPositionKeyFrame;
                 }
-                else if (LastPositionKeyFrame == null)
+                else if (NextPositionKeyFrame == null)
                 {
-                    LastKeyFrame = LastRotationKeyFrame;
+                    NextKeyFrame = NextRotationKeyFrame;
                 }
-                else if (LastRotationKeyFrame == null)
+                else if (NextRotationKeyFrame == null)
                 {
-                    LastKeyFrame = LastPositionKeyFrame;
+                    NextKeyFrame = NextPositionKeyFrame;
                 }
 
-                if (CurrentKeyFrame != null)
+                if (NextKeyFrame != null)
                 {
-                    Interpolation = CurrentKeyFrame.BoneInterpolation;
-                }
-                else if (LastKeyFrame != null)
-                {
-                    Interpolation = LastKeyFrame.BoneInterpolation;
+                    Interpolation = NextKeyFrame.BoneInterpolation;
                 }
                 else
                 {
@@ -140,33 +133,26 @@ namespace UnityVMDReader
                 NextPositionKeyFrame = BonePositionKeyFrames.Find(x => x.FrameNumber > frameNumber);
                 NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.FrameNumber > frameNumber);
 
-                if (LastPositionKeyFrame == null && LastRotationKeyFrame == null)
+                if (NextPositionKeyFrame == null && NextRotationKeyFrame == null)
                 {
-                    if (CurrentKeyFrame != null)
-                    {
-                        LastKeyFrame = CurrentKeyFrame;
-                    }
+                    NextKeyFrame = null;
                 }
-                else if (LastPositionKeyFrame != null && LastRotationKeyFrame != null)
+                else if (NextPositionKeyFrame != null && NextRotationKeyFrame != null)
                 {
-                    LastKeyFrame = LastPositionKeyFrame.FrameNumber < LastRotationKeyFrame.FrameNumber ? LastRotationKeyFrame : LastPositionKeyFrame;
+                    NextKeyFrame = NextRotationKeyFrame.FrameNumber < NextPositionKeyFrame.FrameNumber ? NextRotationKeyFrame : NextPositionKeyFrame;
                 }
-                else if (LastPositionKeyFrame == null)
+                else if (NextPositionKeyFrame == null)
                 {
-                    LastKeyFrame = LastRotationKeyFrame;
+                    NextKeyFrame = NextRotationKeyFrame;
                 }
-                else if (LastRotationKeyFrame == null)
+                else if (NextRotationKeyFrame == null)
                 {
-                    LastKeyFrame = LastPositionKeyFrame;
+                    NextKeyFrame = NextPositionKeyFrame;
                 }
 
-                if (CurrentKeyFrame != null)
+                if (NextKeyFrame != null)
                 {
-                    Interpolation = CurrentKeyFrame.BoneInterpolation;
-                }
-                else if (LastKeyFrame != null)
-                {
-                    Interpolation = LastKeyFrame.BoneInterpolation;
+                    Interpolation = NextKeyFrame.BoneInterpolation;
                 }
                 else
                 {
