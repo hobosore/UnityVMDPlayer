@@ -132,7 +132,8 @@ public class UnityVMDPlayer : MonoBehaviour
     private void FixedUpdate()
     {
         if (!IsPlaying) { return; }
-
+        if (vmdReader == null) { return; }
+        
         //最終フレームを超えれば終了
         if (vmdReader.FrameCount <= FrameNumber)
         {
@@ -567,6 +568,9 @@ public class UnityVMDPlayer : MonoBehaviour
         public Animator Animator { get; private set; }
         Transform hips;
         BoneGhost boneGhost;
+        bool useCenter;
+        bool useGroove;
+        bool useSpine;
 
         public CenterAnimation(VMDReader vmdReader, Animator animator, BoneGhost boneGhost)
         {
@@ -574,6 +578,9 @@ public class UnityVMDPlayer : MonoBehaviour
             Animator = animator;
             hips = Animator.GetBoneTransform(HumanBodyBones.Hips);
             this.boneGhost = boneGhost;
+            useCenter = vmdReader.BoneKeyFrameGroups.Find(x => x.Name == BoneNames.センター).BoneKeyFrames.Count > 0;
+            useGroove = vmdReader.BoneKeyFrameGroups.Find(x => x.Name == BoneNames.グルーブ).BoneKeyFrames.Count > 0;
+            useSpine = vmdReader.BoneKeyFrameGroups.Find(x => x.Name == BoneNames.上半身).BoneKeyFrames.Count > 0;
         }
 
         public void AnimateAndInterpolate(int frameNumber)
@@ -761,17 +768,58 @@ public class UnityVMDPlayer : MonoBehaviour
                         float zInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.z, nextPositionVMDBoneFrame.Position.z, zInterpolationRate);
 
                         Vector3 deltaVector = new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += deltaVector;
-                        boneGhost.GhostDictionary[BoneNames.上半身].ghost.localPosition -= deltaVector;
+                        if (useCenter || useGroove) { boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += deltaVector; }
+                        else { boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = deltaVector; }
+                        if (useSpine) { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localPosition -= deltaVector; }
+                        else { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localPosition = -deltaVector; }
+                    }
+                    else if (lastPositionVMDBoneFrame == null && nextPositionVMDBoneFrame != null)
+                    {
+                        float xInterpolationRate = lowerBodyVMDBoneGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, 0, nextPositionVMDBoneFrame.FrameNumber);
+                        float yInterpolationRate = lowerBodyVMDBoneGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, 0, nextPositionVMDBoneFrame.FrameNumber);
+                        float zInterpolationRate = lowerBodyVMDBoneGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, 0, nextPositionVMDBoneFrame.FrameNumber);
+
+                        float xInterpolation = Mathf.Lerp(0, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
+                        float yInterpolation = Mathf.Lerp(0, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
+                        float zInterpolation = Mathf.Lerp(0, nextPositionVMDBoneFrame.Position.z, zInterpolationRate);
+                        Vector3 deltaVector = new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
+                        if (useCenter || useGroove) { boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += deltaVector; }
+                        else { boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = deltaVector; }
+                        if (useSpine) { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localPosition -= deltaVector; }
+                        else { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localPosition = -deltaVector; }
+                    }
+                    else if (nextPositionVMDBoneFrame == null && lastPositionVMDBoneFrame != null)
+                    {
+                        if (useCenter || useGroove) { boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += lastPositionVMDBoneFrame.Position * DefaultBoneAmplifier; }
+                        else { boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition = lastPositionVMDBoneFrame.Position * DefaultBoneAmplifier; }
+                        if (useSpine) { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localPosition -= lastPositionVMDBoneFrame.Position * DefaultBoneAmplifier; }
+                        else { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localPosition = -lastPositionVMDBoneFrame.Position * DefaultBoneAmplifier; }
                     }
 
                     if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
                     {
                         float rotationInterpolationRate = lowerBodyVMDBoneGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, lastRotationVMDBoneFrame.FrameNumber, nextRotationVMDBoneFrame.FrameNumber);
-
                         Quaternion deltaQuaternion = Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate);
-                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation.PlusRotation(deltaQuaternion);
-                        boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation.MinusRotation(deltaQuaternion);
+                        if (useCenter || useGroove) { boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation.PlusRotation(deltaQuaternion); }
+                        else { boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity.PlusRotation(deltaQuaternion); }
+                        if (useSpine) { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation.MinusRotation(deltaQuaternion); }
+                        else { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation = Quaternion.identity.MinusRotation(deltaQuaternion); }
+                    }
+                    else if (lastRotationVMDBoneFrame == null && nextRotationVMDBoneFrame != null)
+                    {
+                        float rotationInterpolationRate = lowerBodyVMDBoneGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, 0, nextRotationVMDBoneFrame.FrameNumber);
+                        Quaternion deltaQuaternion = Quaternion.Lerp(Quaternion.identity, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate);
+                        if (useCenter || useGroove) { boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation.PlusRotation(deltaQuaternion); }
+                        else { boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity.PlusRotation(deltaQuaternion); }
+                        if (useSpine) { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation.MinusRotation(deltaQuaternion); }
+                        else { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation = Quaternion.identity.MinusRotation(deltaQuaternion); }
+                    }
+                    else if (lastRotationVMDBoneFrame != null && nextRotationVMDBoneFrame == null)
+                    {
+                        if (useCenter || useGroove) { boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation.PlusRotation(lastRotationVMDBoneFrame.Rotation); }
+                        else { boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation = Quaternion.identity.PlusRotation(lastRotationVMDBoneFrame.Rotation); }
+                        if (useSpine) { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation = boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation.MinusRotation(lastRotationVMDBoneFrame.Rotation); }
+                        else { boneGhost.GhostDictionary[BoneNames.上半身].ghost.localRotation = Quaternion.identity.MinusRotation(lastRotationVMDBoneFrame.Rotation); }
                     }
                 }
             }
