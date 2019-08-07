@@ -19,7 +19,7 @@ public class UnityVMDPlayer : MonoBehaviour
     const float FPSs = 0.03333f;
     //ボーン移動量の補正係数
     //この値は大体の値、改良の余地あり
-    const float DefaultBoneAmplifier = 0.06f;
+    const float DefaultBoneAmplifier = 0.08f;
     //エラー値の再現に用いる
     readonly Quaternion ZeroQuaternion = new Quaternion(0, 0, 0, 0);
 
@@ -133,7 +133,7 @@ public class UnityVMDPlayer : MonoBehaviour
     {
         if (!IsPlaying) { return; }
         if (vmdReader == null) { return; }
-        
+
         //最終フレームを超えれば終了
         if (vmdReader.FrameCount <= FrameNumber)
         {
@@ -558,7 +558,7 @@ public class UnityVMDPlayer : MonoBehaviour
     //Unityにない下半身ボーンの処理もここで行う
     class CenterAnimation
     {
-        readonly Quaternion ZeroQuaternion = new Quaternion(0,0,0,0);
+        readonly Quaternion ZeroQuaternion = new Quaternion(0, 0, 0, 0);
 
         BoneNames centerBoneName = BoneNames.センター;
         BoneNames grooveBoneName = BoneNames.グルーブ;
