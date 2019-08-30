@@ -83,14 +83,17 @@ namespace UnityVMDReader
             {
                 CurrentKeyFrame = BoneKeyFrames.Find(x => x.FrameNumber == frameNumber);
 
-                if (CurrentKeyFrame == null) { return null; }
+                if (CurrentKeyFrame == null && (NextPositionKeyFrame != null || NextRotationKeyFrame != null))
+                {
+                    return null;
+                }
 
-                if (CurrentKeyFrame.Position != Vector3.zero)
+                if (CurrentKeyFrame != null && CurrentKeyFrame.Position != Vector3.zero)
                 {
                     LastPositionKeyFrame = CurrentKeyFrame;
                     NextPositionKeyFrame = BonePositionKeyFrames.Find(x => x.FrameNumber > frameNumber);
                 }
-                if (CurrentKeyFrame.Rotation != ZeroQuaternion)
+                if (CurrentKeyFrame != null && CurrentKeyFrame.Rotation != ZeroQuaternion)
                 {
                     LastRotationKeyFrame = CurrentKeyFrame;
                     NextRotationKeyFrame = BoneRotationKeyFrames.Find(x => x.FrameNumber > frameNumber);

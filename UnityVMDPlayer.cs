@@ -1227,7 +1227,7 @@ public class UnityVMDPlayer : MonoBehaviour
         {
             foreach (BoneNames boneName in GhostDictionary.Keys)
             {
-                if (GhostDictionary[boneName].ghost == null || !GhostDictionary[boneName].enabled) { return; }
+                if (GhostDictionary[boneName].ghost == null || !GhostDictionary[boneName].enabled) { continue; }
 
                 //Ghostを動かした後、実体を動かす
                 boneDictionary[boneName].position = GhostDictionary[boneName].ghost.position;
