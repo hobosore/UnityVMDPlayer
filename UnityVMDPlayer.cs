@@ -26,9 +26,11 @@ public class UnityVMDPlayer : MonoBehaviour
     //以下はStart時に初期化
     //animatorはPlay時にも一応初期化
     public Animator Animator { get; private set; }
-    //モデルの初期ポーズを保存
-    Dictionary<BoneNames, Transform> boneTransformDictionary;
-    Dictionary<BoneNames, (Vector3 localPosition, Quaternion localRotation)> boneOriginalPoseDictionary;
+
+    //全てのボーンを名前で引く辞書
+    Dictionary<string, Transform> transformDictionary = new Dictionary<string, Transform>();
+    //人ボーンを人ボーン名で引く辞書,Startで代入
+    Dictionary<BoneNames, Transform> humanBoneTransformDictionary;
 
     //以下はPlay時に初期化
     int startedTime;
@@ -59,8 +61,10 @@ public class UnityVMDPlayer : MonoBehaviour
 
         Animator = GetComponent<Animator>();
 
+        //子孫のボーンを記録
+        makeTransformDictionary(Animator.transform, transformDictionary);
         //対応するボーンを記録
-        boneTransformDictionary = new Dictionary<BoneNames, Transform>()
+        humanBoneTransformDictionary = new Dictionary<BoneNames, Transform>()
             {
                 //下半身などというものはUnityにはない
                 { BoneNames.全ての親, (Animator.transform) },
@@ -117,15 +121,15 @@ public class UnityVMDPlayer : MonoBehaviour
                 //{ BoneNames.左つま先,   (animator.GetBoneTransform(HumanBodyBones.LeftToes))},
                 //{ BoneNames.右つま先,   (animator.GetBoneTransform(HumanBodyBones.RightToes))}
         };
-        //モデルの初期ポーズを保存
-        boneOriginalPoseDictionary = new Dictionary<BoneNames, (Vector3, Quaternion)>();
-        foreach (BoneNames boneName in boneTransformDictionary.Keys)
-        {
-            if (boneName == BoneNames.全ての親) { continue; }
-            if (boneTransformDictionary[boneName] == null) { continue; }
 
-            boneOriginalPoseDictionary
-                .Add(boneName, (boneTransformDictionary[boneName].localPosition, boneTransformDictionary[boneName].localRotation));
+        void makeTransformDictionary(Transform rootBone, Dictionary<string, Transform> dictionary)
+        {
+            if (dictionary.ContainsKey(rootBone.name)) { return; }
+            dictionary.Add(rootBone.name, rootBone);
+            foreach (Transform childT in rootBone)
+            {
+                makeTransformDictionary(childT, dictionary);
+            }
         }
     }
 
@@ -239,16 +243,10 @@ public class UnityVMDPlayer : MonoBehaviour
         originalParentLocalRotation = transform.localRotation;
 
         //モデルに初期ポーズを取らせる
-        foreach (BoneNames boneName in boneTransformDictionary.Keys)
-        {
-            if (boneTransformDictionary[boneName] == null) { continue; }
-            if (!boneOriginalPoseDictionary.Keys.Contains(boneName)) { continue; }
-            boneTransformDictionary[boneName].localPosition = boneOriginalPoseDictionary[boneName].localPosition;
-            boneTransformDictionary[boneName].localRotation = boneOriginalPoseDictionary[boneName].localRotation;
-        }
+        EnforceInitialPose(Animator, true);
 
         this.vmdReader = vmdReader;
-        boneGhost = new BoneGhost(Animator, boneTransformDictionary);
+        boneGhost = new BoneGhost(Animator, humanBoneTransformDictionary);
         morphPlayer = new MorphPlayer(transform, vmdReader);
         upperBodyAnimation = new UpperBodyAnimation(Animator, vmdReader, boneGhost, LeftUpperArmTwist, RightUpperArmTwist);
         centerAnimation = new CenterAnimation(vmdReader, Animator, boneGhost);
@@ -370,6 +368,49 @@ public class UnityVMDPlayer : MonoBehaviour
         else if (lastRotationVMDBoneFrame != null && nextRotationVMDBoneFrame == null)
         {
             transform.localRotation = originalParentLocalRotation.PlusRotation(lastRotationVMDBoneFrame.Rotation);
+        }
+    }
+
+    void EnforceInitialPose(Animator animator, bool aPose = false)
+    {
+        if (animator == null)
+        {
+            UnityEngine.Debug.Log("EnforceInitialPose");
+            UnityEngine.Debug.Log("Animatorがnullです");
+            return;
+        }
+
+        const int APoseDegree = 30;
+
+        Vector3 position = animator.transform.position;
+        Quaternion rotation = animator.transform.rotation;
+        animator.transform.position = Vector3.zero;
+        animator.transform.rotation = Quaternion.identity;
+
+        int count = animator.avatar.humanDescription.skeleton.Length;
+        for (int i = 0; i < count; i++)
+        {
+            if (!transformDictionary.ContainsKey(animator.avatar.humanDescription.skeleton[i].name))
+            {
+                continue;
+            }
+
+            transformDictionary[animator.avatar.humanDescription.skeleton[i].name].localPosition
+                = animator.avatar.humanDescription.skeleton[i].position;
+            transformDictionary[animator.avatar.humanDescription.skeleton[i].name].localRotation
+                = animator.avatar.humanDescription.skeleton[i].rotation;
+        }
+
+        animator.transform.position = position;
+        animator.transform.rotation = rotation;
+
+        if (aPose && animator.isHuman)
+        {
+            Transform leftUpperArm = animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
+            Transform rightUpperArm = animator.GetBoneTransform(HumanBodyBones.RightUpperArm);
+            if (leftUpperArm == null || rightUpperArm == null) { return; }
+            leftUpperArm.Rotate(animator.transform.forward, APoseDegree, Space.World);
+            rightUpperArm.Rotate(animator.transform.forward, -APoseDegree, Space.World);
         }
     }
 
