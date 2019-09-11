@@ -611,7 +611,7 @@ public class UnityVMDPlayer : MonoBehaviour
                 {
                     //Ghostは正規化されている
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation =
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
                         .PlusRotation(centerVMDBoneFrame.Rotation);
                 }
             }
@@ -656,21 +656,21 @@ public class UnityVMDPlayer : MonoBehaviour
                 {
                     float centerRotationInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, centerVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, centerVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation =
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
                         .PlusRotation(Quaternion.Lerp(centerLastRotationVMDBoneFrame.Rotation, centerNextRotationVMDBoneFrame.Rotation, centerRotationInterpolationRate));
                 }
                 else if (centerNextRotationVMDBoneFrame != null)
                 {
                     float centerRotationInterpolationRate = centerVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, 0, centerVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation =
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
                         .PlusRotation(Quaternion.Lerp(Quaternion.identity, centerNextRotationVMDBoneFrame.Rotation, centerRotationInterpolationRate));
 
                 }
                 else if (centerLastRotationVMDBoneFrame != null)
                 {
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation =
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
                         .PlusRotation(centerLastRotationVMDBoneFrame.Rotation);
                 }
             }
@@ -686,7 +686,7 @@ public class UnityVMDPlayer : MonoBehaviour
                 {
                     //Ghostは正規化されている
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
-                        .PlusRotation(grooveVMDBoneFrame.Rotation);
+                    .PlusRotation(grooveVMDBoneFrame.Rotation);
                 }
             }
             else
@@ -720,13 +720,13 @@ public class UnityVMDPlayer : MonoBehaviour
                 {
                     float grooveRotationInterpolationRate = grooveVMDBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, grooveVMDBoneFrameGroup.LastRotationKeyFrame.FrameNumber, grooveVMDBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation =
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
                         .PlusRotation(Quaternion.Lerp(grooveLastRotationVMDBoneFrame.Rotation, grooveNextRotationVMDBoneFrame.Rotation, grooveRotationInterpolationRate));
                 }
                 else if (grooveLastRotationVMDBoneFrame != null)
                 {
                     boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation =
-                    boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
+                        boneGhost.GhostDictionary[BoneNames.センター].ghost.localRotation
                         .PlusRotation(grooveLastRotationVMDBoneFrame.Rotation);
                 }
             }
