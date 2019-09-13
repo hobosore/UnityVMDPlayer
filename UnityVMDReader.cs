@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using UnityEngine;
+using System.Threading.Tasks;
 
 namespace UnityVMDReader
 {
@@ -216,7 +217,7 @@ namespace UnityVMDReader
 
                 if (frameNumber == NextMorphKeyFrame.FrameNumber)
                 {
-                    LastMorphKeyFrame = CurrentMorphKeyFrame;
+                    LastMorphKeyFrame = NextMorphKeyFrame;
                     CurrentMorphKeyFrame = NextMorphKeyFrame;
                     NextMorphKeyFrame = FaceKeyFrames.Find(x => x.FrameNumber > frameNumber);
                     return CurrentMorphKeyFrame;
@@ -296,6 +297,15 @@ namespace UnityVMDReader
                 }
                 FaceKeyFrameGroups[morphName].FaceKeyFrames.Add(faceKeyFrame);
             }
+        }
+
+        public static async Task<VMDReader> ReadVMDAsync(string filePath)
+        {
+            return await Task.Run(() =>
+            {
+                VMDReader vmdReader = new VMDReader(filePath);
+                return vmdReader;
+            });
         }
 
         public BoneKeyFrameGroup GetBoneKeyFrameGroup(BoneKeyFrameGroup.BoneNames boneName)

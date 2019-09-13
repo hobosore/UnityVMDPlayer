@@ -5,6 +5,7 @@ using System;
 using UnityVMDReader;
 using static UnityVMDReader.VMDReader.BoneKeyFrameGroup;
 using System.Collections;
+using System.Threading.Tasks;
 
 public class UnityVMDPlayer : MonoBehaviour
 {
@@ -269,11 +270,22 @@ public class UnityVMDPlayer : MonoBehaviour
 
         Play(vmdReader, 0);
     }
+    public async Task PlayAsync(string filePath)
+    {
+        vmdReader = await VMDReader.ReadVMDAsync(filePath);
+
+        Play(vmdReader, 0);
+    }
 
     public void Play(string filePath, Action endAction)
     {
         this.endAction = endAction;
         Play(filePath);
+    }
+    public async Task PlayAsync(string filePath, Action endAction)
+    {
+        this.endAction = endAction;
+        await PlayAsync(filePath);
     }
 
     public void Play(string filePath, bool useParentOfAll)
@@ -281,11 +293,21 @@ public class UnityVMDPlayer : MonoBehaviour
         UseParentOfAll = useParentOfAll;
         Play(filePath);
     }
+    public async Task PlayAsync(string filePath, bool useParentOfAll)
+    {
+        UseParentOfAll = useParentOfAll;
+        await PlayAsync(filePath);
+    }
 
     public void Play(string filePath, bool useParentOfAll, Action endAction)
     {
         this.endAction = endAction;
         Play(filePath, useParentOfAll);
+    }
+    public async Task PlayAsync(string filePath, bool useParentOfAll, Action endAction)
+    {
+        this.endAction = endAction;
+        await PlayAsync(filePath, useParentOfAll);
     }
 
     public void JumpToFrame(int frameNumber)
