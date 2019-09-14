@@ -1,4 +1,4 @@
-# UnityVMDPlayer(beta)
+# UnityVMDPlayer
 ユニティでVMDファイル(MMDのアニメーションファイル)を使うためのコード 
 VMDファイルを直接読み込むことで、外部のアニメーションファイルを動的に実行できるようになります。  
 master-branchのものはunity2019以降でしか動きません。  
