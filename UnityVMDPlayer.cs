@@ -170,15 +170,15 @@ public class UnityVMDPlayer : MonoBehaviour
         //下半身の補完
         if (centerAnimation != null) { centerAnimation.Complement(FrameNumber); }
 
+        //Ghostを実態に反映
+        if (boneGhost != null) { boneGhost.GhostAll(); }
+
         //足IKを動かす
         if (leftFootIK != null) { leftFootIK.IK(FrameNumber); }
         if (rightFootIK != null) { rightFootIK.IK(FrameNumber); }
         //足IKの補間
         if (leftFootIK != null) { leftFootIK.InterpolateIK(FrameNumber); }
         if (rightFootIK != null) { rightFootIK.InterpolateIK(FrameNumber); }
-
-        //Ghost
-        if (boneGhost != null) { boneGhost.GhostAll(); }
 
         //モーフ
         if (morphPlayer != null) { morphPlayer.Morph(FrameNumber); }
@@ -320,11 +320,11 @@ public class UnityVMDPlayer : MonoBehaviour
         if (upperBodyAnimation != null) { upperBodyAnimation.InterpolateUpperBody(frameNumber); }
         if (centerAnimation != null) { centerAnimation.AnimateAndInterpolate(frameNumber); }
         if (centerAnimation != null) { centerAnimation.Complement(frameNumber); }
+        if (boneGhost != null) { boneGhost.GhostAll(); }
         if (leftFootIK != null) { leftFootIK.IK(frameNumber); }
         if (rightFootIK != null) { rightFootIK.IK(frameNumber); }
         if (leftFootIK != null) { leftFootIK.InterpolateIK(frameNumber); }
         if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
-        if (boneGhost != null) { boneGhost.GhostAll(); }
         if (morphPlayer != null) { morphPlayer.Morph(frameNumber); }
     }
 
