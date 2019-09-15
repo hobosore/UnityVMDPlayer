@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using UnityEngine;
+using System.Threading.Tasks;
 
 namespace UnityVMDReader
 {
@@ -216,7 +217,7 @@ namespace UnityVMDReader
 
                 if (frameNumber == NextMorphKeyFrame.FrameNumber)
                 {
-                    LastMorphKeyFrame = CurrentMorphKeyFrame;
+                    LastMorphKeyFrame = NextMorphKeyFrame;
                     CurrentMorphKeyFrame = NextMorphKeyFrame;
                     NextMorphKeyFrame = FaceKeyFrames.Find(x => x.FrameNumber > frameNumber);
                     return CurrentMorphKeyFrame;
@@ -296,6 +297,15 @@ namespace UnityVMDReader
                 }
                 FaceKeyFrameGroups[morphName].FaceKeyFrames.Add(faceKeyFrame);
             }
+        }
+
+        public static async Task<VMDReader> ReadVMDAsync(string filePath)
+        {
+            return await Task.Run(() =>
+            {
+                VMDReader vmdReader = new VMDReader(filePath);
+                return vmdReader;
+            });
         }
 
         public BoneKeyFrameGroup GetBoneKeyFrameGroup(BoneKeyFrameGroup.BoneNames boneName)
@@ -383,22 +393,19 @@ namespace UnityVMDReader
             public Interpolation BoneInterpolation = new Interpolation();
 
             public BoneKeyFrame() { }
-            public BoneKeyFrame(Stream stream) { Read(stream); }
+            public BoneKeyFrame(BinaryReader binaryReader) { Read(binaryReader); }
 
-            public void Read(Stream stream)
+            public void Read(BinaryReader binaryReader)
             {
-                BinaryReader binaryReader = new BinaryReader(stream);
                 byte[] nameBytes = binaryReader.ReadBytes(15);
                 Name = System.Text.Encoding.GetEncoding("shift_jis").GetString(nameBytes);
                 //ヌル文字除去
                 Name = Name.TrimEnd('\0').TrimEnd('?').TrimEnd('\0');
                 FrameNumber = binaryReader.ReadInt32();
-                float[] positionArray = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
                 //座標系の違いにより、x,zをマイナスにすることに注意
-                Position = new Vector3(-positionArray[0], positionArray[1], -positionArray[2]);
-                float[] rotationArray = (from n in Enumerable.Range(0, 4) select binaryReader.ReadSingle()).ToArray();
+                Position = Util.ReadVector3(binaryReader);
                 //座標系の違いにより、x,zをマイナスにすることに注意
-                Rotation = new Quaternion(-rotationArray[0], rotationArray[1], -rotationArray[2], rotationArray[3]);
+                Rotation = Util.ReadQuaternion(binaryReader);
 
                 //VMDでは3次ベジェ曲線において
                 //X軸の補間 パラメータP1(X_x1, X_y1),P2(X_x2, X_y2)
@@ -439,11 +446,10 @@ namespace UnityVMDReader
             public uint FrameNumber { get; private set; }
 
             public FaceKeyFrame() { }
-            public FaceKeyFrame(Stream stream) { Read(stream); }
+            public FaceKeyFrame(BinaryReader binaryReader) { Read(binaryReader); }
 
-            public void Read(Stream stream)
+            public void Read(BinaryReader binaryReader)
             {
-                BinaryReader binaryReader = new BinaryReader(stream);
                 byte[] nameBytes = binaryReader.ReadBytes(15);
                 MorphName = System.Text.Encoding.GetEncoding("shift_jis").GetString(nameBytes);
                 //ヌル文字除去
@@ -528,23 +534,20 @@ namespace UnityVMDReader
             }
 
             public CameraKeyFrame() { }
-            public CameraKeyFrame(Stream stream) { Read(stream); }
+            public CameraKeyFrame(BinaryReader binaryReader) { Read(binaryReader); }
 
-            public void Read(Stream stream)
+            public void Read(BinaryReader binaryReader)
             {
-                BinaryReader binaryReader = new BinaryReader(stream);
                 Frame = binaryReader.ReadInt32();
 
                 //目標点とカメラの距離(目標点がカメラ前面でマイナス)
                 Distance = binaryReader.ReadInt32();
-                float[] positionArray = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
 
                 //座標系、x,zをマイナスにすることに注意
-                Position = new Vector3(-positionArray[0], positionArray[1], -positionArray[2]);
-                float[] rotationArray = (from n in Enumerable.Range(0, 4) select binaryReader.ReadSingle()).ToArray();
+                Position = Util.ReadVector3(binaryReader);
 
                 //座標系、x,zをマイナスにすることに注意
-                Rotation = new Quaternion(-rotationArray[0], rotationArray[1], -rotationArray[2], rotationArray[3]);
+                Rotation = Util.ReadQuaternion(binaryReader);
 
                 void parseInterpolation(Interpolation.BezierCurvePoint[] x)
                 {
@@ -574,22 +577,20 @@ namespace UnityVMDReader
             //ライトの色、R,G,Bの順に格納されている、0から1
             public float[] LightColor { get; private set; } = new float[3];
             //ライトの位置
-            public float[] Position { get; private set; } = new float[3];
+            public Vector3 Position { get; private set; }
 
             public LightKeyFrame() { }
-            public LightKeyFrame(Stream stream) { Read(stream); }
+            public LightKeyFrame(BinaryReader binaryReader) { Read(binaryReader); }
 
-            public void Read(Stream stream)
+            public void Read(BinaryReader binaryReader)
             {
-                BinaryReader binaryReader = new BinaryReader(stream);
                 Frame = binaryReader.ReadInt32();
 
                 //R,G,Bの順に格納されている、0から1
                 float[] LightColor = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
 
-                float[] positionArray = (from n in Enumerable.Range(0, 3) select binaryReader.ReadSingle()).ToArray();
                 //座標系の違いによりx,zをマイナスとする
-                Position = new float[] { -positionArray[0], positionArray[1], -positionArray[2] };
+                Position = Util.ReadVector3(binaryReader);
             }
         };
 
@@ -603,11 +604,10 @@ namespace UnityVMDReader
             public float Distance { get; private set; }
 
             public SelfShadowKeyFrame() { }
-            public SelfShadowKeyFrame(Stream stream) { Read(stream); }
+            public SelfShadowKeyFrame(BinaryReader binaryReader) { Read(binaryReader); }
 
-            public void Read(Stream stream)
+            public void Read(BinaryReader binaryReader)
             {
-                BinaryReader binaryReader = new BinaryReader(stream);
                 Frame = binaryReader.ReadInt32();
                 Type = binaryReader.ReadByte();
                 Distance = binaryReader.ReadSingle();
@@ -630,11 +630,10 @@ namespace UnityVMDReader
             public List<VMDIKEnable> IKEnable { get; private set; } = new List<VMDIKEnable>();
 
             public IKKeyFrame() { }
-            public IKKeyFrame(Stream stream) { Read(stream); }
+            public IKKeyFrame(BinaryReader binaryReader) { Read(binaryReader); }
 
-            public void Read(Stream stream)
+            public void Read(BinaryReader binaryReader)
             {
-                BinaryReader binaryReader = new BinaryReader(stream);
                 byte[] buffer = new byte[20];
                 Frame = binaryReader.ReadInt32();
                 Display = BitConverter.ToBoolean(new byte[] { binaryReader.ReadByte() }, 0);
@@ -674,11 +673,10 @@ namespace UnityVMDReader
         public VMD() { }
         public VMD(string filePath) { LoadFromFile(filePath); }
 
-        public void LoadFromStream(Stream stream)
+        public void LoadFromStream(BinaryReader binaryReader)
         {
             try
             {
-                BinaryReader binaryReader = new BinaryReader(stream);
                 char[] buffer = new char[30];
 
                 //ファイルタイプの読み込み
@@ -703,14 +701,14 @@ namespace UnityVMDReader
                 int boneFrameCount = binaryReader.ReadInt32();
                 for (int i = 0; i < boneFrameCount; i++)
                 {
-                    BoneKeyFrames.Add(new BoneKeyFrame(stream));
+                    BoneKeyFrames.Add(new BoneKeyFrame(binaryReader));
                 }
 
                 //表情モーフのキーフレームの読み込み
                 int faceFrameCount = binaryReader.ReadInt32();
                 for (int i = 0; i < faceFrameCount; i++)
                 {
-                    FaceKeyFrames.Add(new FaceKeyFrame(stream));
+                    FaceKeyFrames.Add(new FaceKeyFrame(binaryReader));
                 }
                 FaceKeyFrames = FaceKeyFrames.OrderBy(x => x.FrameNumber).ToList();
 
@@ -718,7 +716,7 @@ namespace UnityVMDReader
                 int cameraFrameCount = binaryReader.ReadInt32();
                 for (int i = 0; i < cameraFrameCount; i++)
                 {
-                    CameraFrames.Add(new CameraKeyFrame(stream));
+                    CameraFrames.Add(new CameraKeyFrame(binaryReader));
                 }
                 CameraFrames = CameraFrames.OrderBy(x => x.Frame).ToList();
 
@@ -726,7 +724,7 @@ namespace UnityVMDReader
                 int lightFrameCount = binaryReader.ReadInt32();
                 for (int i = 0; i < lightFrameCount; i++)
                 {
-                    LightFrames.Add(new LightKeyFrame(stream));
+                    LightFrames.Add(new LightKeyFrame(binaryReader));
                 }
                 LightFrames = LightFrames.OrderBy(x => x.Frame).ToList();
 
@@ -737,7 +735,7 @@ namespace UnityVMDReader
                 int selfShadowFrameCount = binaryReader.ReadInt32();
                 for (int i = 0; i < selfShadowFrameCount; i++)
                 {
-                    SelfShadowKeyFrames.Add(new SelfShadowKeyFrame(stream));
+                    SelfShadowKeyFrames.Add(new SelfShadowKeyFrame(binaryReader));
                 }
                 SelfShadowKeyFrames = SelfShadowKeyFrames.OrderBy(x => x.Frame).ToList();
 
@@ -748,7 +746,7 @@ namespace UnityVMDReader
                 int ikFrameCount = binaryReader.ReadInt32();
                 for (int i = 0; i < ikFrameCount; i++)
                 {
-                    IKFrames.Add(new IKKeyFrame(stream));
+                    IKFrames.Add(new IKKeyFrame(binaryReader));
                 }
 
                 //ここで終わってないとおかしい
@@ -768,9 +766,40 @@ namespace UnityVMDReader
         public void LoadFromFile(string filePath)
         {
             using (FileStream fileStream = File.OpenRead(filePath))
+            using (BinaryReader binaryReader = new BinaryReader(fileStream))
             {
-                LoadFromStream(fileStream);
+                LoadFromStream(binaryReader);
             }
         }
     };
+
+    class Util
+    {
+        public static Vector3 ReadVector3(BinaryReader binaryReader)
+        {
+            float x = -binaryReader.ReadSingle();
+            float y = binaryReader.ReadSingle();
+            float z = -binaryReader.ReadSingle();
+            return new Vector3(x, y, z);
+        }
+
+        public static Quaternion ReadQuaternion(BinaryReader binaryReader)
+        {
+            float x = -binaryReader.ReadSingle();
+            float y = binaryReader.ReadSingle();
+            float z = -binaryReader.ReadSingle();
+            float w = binaryReader.ReadSingle();
+
+            return new Quaternion(x, y, z, w);
+        }
+
+        public static Quaternion ReadEulerQuaternion(BinaryReader binaryReader)
+        {
+            float x = -binaryReader.ReadSingle();
+            float y = binaryReader.ReadSingle();
+            float z = -binaryReader.ReadSingle();
+
+            return Quaternion.Euler(x, y, z);
+        }
+    }
 }
