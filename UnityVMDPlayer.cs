@@ -17,7 +17,7 @@ public class UnityVMDPlayer : MonoBehaviour
     Action endAction = () => { };
     //デフォルトは30fps、垂直同期は切らないと重いことがある?
     //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
-    const float FPSs = 0.03333f;
+    const float DefaultFPS = 30f;
     //ボーン移動量の補正係数
     //この値は大体の値、改良の余地あり
     const float DefaultBoneAmplifier = 0.08f;
@@ -32,9 +32,16 @@ public class UnityVMDPlayer : MonoBehaviour
     Dictionary<string, Transform> transformDictionary = new Dictionary<string, Transform>();
     //人ボーンを人ボーン名で引く辞書,Startで代入
     Dictionary<BoneNames, Transform> humanBoneTransformDictionary;
+    //FPSのずれを補間するための辞書
+    Dictionary<BoneNames, (Vector3 localPosition, Quaternion localRotation)> nowPose
+        = new Dictionary<BoneNames, (Vector3 localPosition, Quaternion localRotation)>();
+    Dictionary<BoneNames, (Vector3 localPosition, Quaternion localRotation)> nextPose 
+        = new Dictionary<BoneNames, (Vector3 localPosition, Quaternion localRotation)>();
 
+    int lastFrameNumber = -1;
+    //FPSのずれによる非整数のフレームも計算する
+    float internalFrameNumber = 0;
     //以下はPlay時に初期化
-    int startedTime;
     Vector3 originalParentLocalPosition;
     Quaternion originalParentLocalRotation;
     UpperBodyAnimation upperBodyAnimation;
@@ -59,8 +66,6 @@ public class UnityVMDPlayer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Time.fixedDeltaTime = FPSs;
-
         Animator = GetComponent<Animator>();
 
         //子孫のボーンを記録
@@ -135,7 +140,7 @@ public class UnityVMDPlayer : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
+    void Update()
     {
         if (!IsPlaying) { return; }
         if (vmdReader == null) { return; }
@@ -156,41 +161,29 @@ public class UnityVMDPlayer : MonoBehaviour
             return;
         }
 
-        //全ての親を動かす
-        if (UseParentOfAll) { AnimateParentOfAll(); }
-        //全ての親の補間
-        if (UseParentOfAll) { InterpolateParentOfAll(); }
+        if(FrameNumber != lastFrameNumber)
+        {
+            lastFrameNumber = FrameNumber;
+            AnimateBody(FrameNumber);
+            nowPose = SavePose();
+            AnimateBody(FrameNumber + 1);
+            nextPose = SavePose();
 
-        //腰から上を動かす
-        if (upperBodyAnimation != null) { upperBodyAnimation.AnimateUpperBody(FrameNumber); }
-        //腰から上の補間
-        if (upperBodyAnimation != null) { upperBodyAnimation.InterpolateUpperBody(FrameNumber); }
+            if (morphPlayer != null) { morphPlayer.Morph(FrameNumber); }
+        }
+        float rate = internalFrameNumber - FrameNumber;
 
-        //腰から上を動かす
-        if (lowerBodyAnimation != null) { lowerBodyAnimation.AnimateLowerBody(FrameNumber); }
-        //腰から上の補間
-        if (lowerBodyAnimation != null) { lowerBodyAnimation.InterpolateLowerBody(FrameNumber); }
+        foreach (BoneNames boneName in nowPose.Keys)
+        {
+            if (humanBoneTransformDictionary[boneName] == null) { continue; }
+            if (!nextPose.ContainsKey(boneName)) { continue; }
 
-        //センター
-        if (centerAnimation != null) { centerAnimation.AnimateAndInterpolate(FrameNumber); }
-        //下半身の補完
-        if (centerAnimation != null) { centerAnimation.Complement(FrameNumber); }
+            humanBoneTransformDictionary[boneName].localPosition = Vector3.Lerp(nowPose[boneName].localPosition, nextPose[boneName].localPosition, rate);
+            humanBoneTransformDictionary[boneName].localRotation = Quaternion.Lerp(nowPose[boneName].localRotation, nextPose[boneName].localRotation, rate);
+        }
 
-        //Ghostを実態に反映
-        if (boneGhost != null) { boneGhost.GhostAll(); }
-
-        //足IKを動かす
-        if (leftFootIK != null) { leftFootIK.IK(FrameNumber); }
-        if (rightFootIK != null) { rightFootIK.IK(FrameNumber); }
-        //足IKの補間
-        if (leftFootIK != null) { leftFootIK.InterpolateIK(FrameNumber); }
-        if (rightFootIK != null) { rightFootIK.InterpolateIK(FrameNumber); }
-
-        //モーフ
-        if (morphPlayer != null) { morphPlayer.Morph(FrameNumber); }
-
-
-        FrameNumber++;
+        internalFrameNumber += DefaultFPS * Time.deltaTime;
+        FrameNumber = (int)internalFrameNumber;
     }
 
     void OnDrawGizmosSelected()
@@ -200,11 +193,6 @@ public class UnityVMDPlayer : MonoBehaviour
         Transform rightFoot = Animator.GetBoneTransform(HumanBodyBones.RightFoot);
         Gizmos.DrawWireSphere(leftFoot.position + leftFoot.rotation * new Vector3(LeftFootOffset.x, -LeftFootOffset.y, LeftFootOffset.z), 0.1f);
         Gizmos.DrawWireSphere(rightFoot.position + rightFoot.rotation * new Vector3(RightFootOffset.x, -RightFootOffset.y, RightFootOffset.z), 0.1f);
-    }
-
-    public void SetFPS(int fps)
-    {
-        Time.fixedDeltaTime = 1 / (float)fps;
     }
 
     public void SetEndAction(Action endAction)
@@ -317,7 +305,15 @@ public class UnityVMDPlayer : MonoBehaviour
     public void JumpToFrame(int frameNumber)
     {
         if (frameNumber < 0) { frameNumber = 0; }
+        this.lastFrameNumber = -1;
         this.FrameNumber = frameNumber;
+        this.internalFrameNumber = frameNumber;
+        AnimateBody(frameNumber);
+        if (morphPlayer != null) { morphPlayer.Morph(frameNumber); }
+    }
+
+    void AnimateBody(int frameNumber)
+    {
         if (UseParentOfAll) { AnimateParentOfAll(); }
         if (UseParentOfAll) { InterpolateParentOfAll(); }
         if (upperBodyAnimation != null) { upperBodyAnimation.AnimateUpperBody(frameNumber); }
@@ -331,7 +327,20 @@ public class UnityVMDPlayer : MonoBehaviour
         if (rightFootIK != null) { rightFootIK.IK(frameNumber); }
         if (leftFootIK != null) { leftFootIK.InterpolateIK(frameNumber); }
         if (rightFootIK != null) { rightFootIK.InterpolateIK(frameNumber); }
-        if (morphPlayer != null) { morphPlayer.Morph(frameNumber); }
+    }
+
+    Dictionary<BoneNames, (Vector3 localPosition, Quaternion localRotation)> SavePose()
+    {
+        Dictionary<BoneNames, (Vector3 localPosition, Quaternion localRotation)> pose
+            = new Dictionary<BoneNames, (Vector3 localPosition, Quaternion localRotation)>();
+
+        foreach (BoneNames boneName in humanBoneTransformDictionary.Keys)
+        {
+            if (humanBoneTransformDictionary[boneName] == null) { continue; }
+            pose.Add(boneName, (humanBoneTransformDictionary[boneName].localPosition, humanBoneTransformDictionary[boneName].localRotation));
+        }
+
+        return pose;
     }
 
     void AnimateParentOfAll()
@@ -1461,6 +1470,8 @@ public class UnityVMDPlayer : MonoBehaviour
         //unity上のモーフ名でvmd上のモーフ名を含むものを探す
         Dictionary<string, string> unityVMDMorphNameDictionary = new Dictionary<string, string>();
 
+        int frameNumber = -1;
+
         public MorphPlayer(Transform model, VMDReader vmdReader)
         {
             this.vmdReader = vmdReader;
@@ -1519,6 +1530,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
         public void Morph(int frameNumber)
         {
+            if (this.frameNumber == frameNumber) { return; }
             foreach (string morphName in morphDrivers.Keys)
             {
                 //含まれないものは除外しているはずだが一応
@@ -1548,6 +1560,7 @@ public class UnityVMDPlayer : MonoBehaviour
                     morphDrivers[morphName].Morph(rate);
                 }
             }
+            this.frameNumber = frameNumber;
         }
 
         class MorphDriver
