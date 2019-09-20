@@ -250,6 +250,10 @@ public class UnityVMDPlayer : MonoBehaviour
         leftFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.LeftFoot, LeftFootOffset);
         rightFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.RightFoot, RightFootOffset);
 
+        FrameNumber = 0;
+        internalFrameNumber = 0;
+        lastFrameNumber = -1;
+
         Play();
     }
 
