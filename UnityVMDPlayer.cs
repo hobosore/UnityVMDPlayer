@@ -15,8 +15,6 @@ public class UnityVMDPlayer : MonoBehaviour
     public int FrameNumber { get; private set; } = 0;
     //モーション終了時に実行させる
     Action endAction = () => { };
-    //デフォルトは30fps、垂直同期は切らないと重いことがある?
-    //FixedUpdateの値をこれにするので、他と競合があるかもしれない。
     const float DefaultFPS = 30f;
     //ボーン移動量の補正係数
     //この値は大体の値、改良の余地あり
