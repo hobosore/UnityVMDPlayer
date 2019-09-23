@@ -1088,6 +1088,10 @@ public class UnityVMDPlayer : MonoBehaviour
 
         public void IK()
         {
+            upperLegLength = Vector3.Distance(HipTransform.position, KneeTransform.position);
+            lowerLegLength = Vector3.Distance(KneeTransform.position, FootTransform.position);
+            legLength = upperLegLength + lowerLegLength;
+
             Vector3 targetVector = Target.position - HipTransform.position;
 
             targetDistance = Mathf.Min(targetVector.magnitude, legLength);
