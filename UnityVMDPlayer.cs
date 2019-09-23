@@ -67,7 +67,7 @@ public class UnityVMDPlayer : MonoBehaviour
         boneTransformDictionary = new Dictionary<BoneNames, Transform>()
             {
                 //下半身などというものはUnityにはない
-                { BoneNames.全ての親, (Animator.transform) },
+                { BoneNames.全ての親, (Animator.GetBoneTransform(HumanBodyBones.Hips).parent) },
                 { BoneNames.センター, (Animator.GetBoneTransform(HumanBodyBones.Hips))},
                 { BoneNames.上半身,   (Animator.GetBoneTransform(HumanBodyBones.Spine))},
                 { BoneNames.上半身2,  (Animator.GetBoneTransform(HumanBodyBones.Chest))},
@@ -229,8 +229,8 @@ public class UnityVMDPlayer : MonoBehaviour
         Animator = GetComponent<Animator>();
         Animator.enabled = false;
 
-        originalParentLocalPosition = transform.localPosition;
-        originalParentLocalRotation = transform.localRotation;
+        originalParentLocalPosition = boneTransformDictionary[BoneNames.全ての親].localPosition;
+        originalParentLocalRotation = boneTransformDictionary[BoneNames.全ての親].localRotation;
 
         //モデルに初期ポーズを取らせる
         foreach (BoneNames boneName in boneTransformDictionary.Keys)
@@ -336,11 +336,11 @@ public class UnityVMDPlayer : MonoBehaviour
         if (parentBoneFrame == null) { parentBoneFrame = new VMD.BoneKeyFrame(); }
         if (parentBoneFrame.Position != Vector3.zero)
         {
-            transform.localPosition = originalParentLocalPosition + parentBoneFrame.Position * DefaultBoneAmplifier;
+            boneTransformDictionary[BoneNames.全ての親].localPosition = originalParentLocalPosition + parentBoneFrame.Position * DefaultBoneAmplifier;
         }
         if (parentBoneFrame.Rotation != ZeroQuaternion)
         {
-            transform.localRotation = originalParentLocalRotation.PlusRotation(parentBoneFrame.Rotation);
+            boneTransformDictionary[BoneNames.全ての親].localRotation = originalParentLocalRotation.PlusRotation(parentBoneFrame.Rotation);
         }
     }
 
@@ -361,7 +361,7 @@ public class UnityVMDPlayer : MonoBehaviour
             float xInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.x, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
             float yInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.y, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
             float zInterpolation = Mathf.Lerp(lastPositionVMDBoneFrame.Position.z, nextPositionVMDBoneFrame.Position.z, zInterpolationRate);
-            transform.localPosition = originalParentLocalPosition + new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
+            boneTransformDictionary[BoneNames.全ての親].localPosition = originalParentLocalPosition + new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
         }
         else if (lastPositionVMDBoneFrame == null && nextPositionVMDBoneFrame != null)
         {
@@ -372,26 +372,26 @@ public class UnityVMDPlayer : MonoBehaviour
             float xInterpolation = Mathf.Lerp(0, nextPositionVMDBoneFrame.Position.x, xInterpolationRate);
             float yInterpolation = Mathf.Lerp(0, nextPositionVMDBoneFrame.Position.y, yInterpolationRate);
             float zInterpolation = Mathf.Lerp(0, nextPositionVMDBoneFrame.Position.z, zInterpolationRate);
-            transform.localPosition = originalParentLocalPosition + new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
+            boneTransformDictionary[BoneNames.全ての親].localPosition = originalParentLocalPosition + new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
         }
         else if (nextPositionVMDBoneFrame == null && lastPositionVMDBoneFrame != null)
         {
-            transform.localPosition = originalParentLocalPosition + lastPositionVMDBoneFrame.Position * DefaultBoneAmplifier;
+            boneTransformDictionary[BoneNames.全ての親].localPosition = originalParentLocalPosition + lastPositionVMDBoneFrame.Position * DefaultBoneAmplifier;
         }
 
         if (nextRotationVMDBoneFrame != null && lastRotationVMDBoneFrame != null)
         {
             float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, FrameNumber, vmdBoneFrameGroup.LastRotationKeyFrame.FrameNumber, vmdBoneFrameGroup.NextRotationKeyFrame.FrameNumber);
-            transform.localRotation = originalParentLocalRotation.PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
+            boneTransformDictionary[BoneNames.全ての親].localRotation = originalParentLocalRotation.PlusRotation(Quaternion.Lerp(lastRotationVMDBoneFrame.Rotation, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
         }
         else if (lastRotationVMDBoneFrame == null && nextRotationVMDBoneFrame != null)
         {
             float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, FrameNumber, 0, nextRotationVMDBoneFrame.FrameNumber);
-            transform.localRotation = originalParentLocalRotation.PlusRotation(Quaternion.Lerp(Quaternion.identity, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
+            boneTransformDictionary[BoneNames.全ての親].localRotation = originalParentLocalRotation.PlusRotation(Quaternion.Lerp(Quaternion.identity, nextRotationVMDBoneFrame.Rotation, rotationInterpolationRate));
         }
         else if (lastRotationVMDBoneFrame != null && nextRotationVMDBoneFrame == null)
         {
-            transform.localRotation = originalParentLocalRotation.PlusRotation(lastRotationVMDBoneFrame.Rotation);
+            boneTransformDictionary[BoneNames.全ての親].localRotation = originalParentLocalRotation.PlusRotation(lastRotationVMDBoneFrame.Rotation);
         }
     }
 
@@ -1081,7 +1081,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
             GameObject targetGameObject = new GameObject();
             targetGameObject.transform.position = FootTransform.position;
-            targetGameObject.transform.parent = Animator.transform;
+            targetGameObject.transform.parent = (Animator.GetBoneTransform(HumanBodyBones.Hips).parent);
             Target = targetGameObject.transform;
             firstLocalPosition = Target.localPosition;
         }
@@ -1348,7 +1348,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
                 if (boneName == BoneNames.センター)
                 {
-                    GhostDictionary[boneName].ghost.SetParent(animator.transform);
+                    GhostDictionary[boneName].ghost.SetParent(animator.GetBoneTransform(HumanBodyBones.Hips).parent);
                     continue;
                 }
 
@@ -1396,8 +1396,9 @@ public class UnityVMDPlayer : MonoBehaviour
                 //Ghostを動かした後、実体を動かす
                 boneDictionary[boneName].position = GhostDictionary[boneName].ghost.position;
 
-                boneDictionary[boneName].rotation
-                    = GhostDictionary[boneName].ghost.rotation
+                boneDictionary[boneName].localRotation
+                    = Quaternion.Inverse(boneDictionary[boneName].parent.rotation)
+                    * GhostDictionary[boneName].ghost.rotation
                     * Quaternion.Inverse(OriginalGhostRotationDictionary[boneName])
                     * OriginalRotationDictionary[boneName];
             }
