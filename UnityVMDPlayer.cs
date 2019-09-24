@@ -236,12 +236,15 @@ public class UnityVMDPlayer : MonoBehaviour
         EnforceInitialPose(Animator, true);
 
         this.vmdReader = vmdReader;
+        if (boneGhost != null) { boneGhost.Destroy(); }
         boneGhost = new BoneGhost(Animator, humanBoneTransformDictionary);
         morphPlayer = new MorphPlayer(transform, vmdReader);
         upperBodyAnimation = new UpperBodyAnimation(Animator, vmdReader, boneGhost, LeftUpperArmTwist, RightUpperArmTwist);
         lowerBodyAnimation = new LowerBodyAnimation(Animator, vmdReader, boneGhost);
         centerAnimation = new CenterAnimation(vmdReader, Animator, boneGhost);
+        if (leftFootIK != null) { leftFootIK.Destroy(); }
         leftFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.LeftFoot, LeftFootOffset);
+        if (rightFootIK != null) { rightFootIK.Destroy(); }
         rightFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.RightFoot, RightFootOffset);
 
         FrameNumber = 0;
@@ -1059,7 +1062,7 @@ public class UnityVMDPlayer : MonoBehaviour
     {
         public enum Feet { LeftFoot, RightFoot }
 
-        const string ToeString = "Toe";
+        const string TargetName = "IKTarget";
 
         public VMDReader VMDReader { get; private set; }
 
@@ -1070,7 +1073,6 @@ public class UnityVMDPlayer : MonoBehaviour
         public Transform HipTransform { get; private set; }
         public Transform KneeTransform { get; private set; }
         public Transform FootTransform { get; private set; }
-        public Transform ToeTransform { get; private set; }
 
         Dictionary<Transform, Quaternion> boneOriginalRotationDictionary;
         Dictionary<Transform, Quaternion> boneOriginalLocalRotationDictionary;
@@ -1111,14 +1113,7 @@ public class UnityVMDPlayer : MonoBehaviour
                 KneeTransform = animator.GetBoneTransform(HumanBodyBones.RightLowerLeg);
                 FootTransform = animator.GetBoneTransform(HumanBodyBones.RightFoot);
             }
-            foreach (Transform childTransform in FootTransform)
-            {
-                if (childTransform.name.Contains(ToeString))
-                {
-                    ToeTransform = childTransform;
-                    break;
-                }
-            }
+
             upperLegLength = Vector3.Distance(HipTransform.position, KneeTransform.position);
             lowerLegLength = Vector3.Distance(KneeTransform.position, FootTransform.position);
             legLength = upperLegLength + lowerLegLength;
@@ -1141,6 +1136,7 @@ public class UnityVMDPlayer : MonoBehaviour
             targetGameObject.transform.position = FootTransform.position;
             targetGameObject.transform.parent = (Animator.GetBoneTransform(HumanBodyBones.Hips).parent);
             Target = targetGameObject.transform;
+            Target.name = Foot.ToString() + TargetName;
             firstLocalPosition = Target.localPosition;
         }
 
@@ -1287,6 +1283,12 @@ public class UnityVMDPlayer : MonoBehaviour
             //    FootTransform.localRotation = FootTransform.localRotation * Quaternion.FromToRotation(toeVector, toeTargetVector);
             //}
             #endregion 足首
+        }
+
+        //使わなくなったIKTargetを削除
+        public void Destroy()
+        {
+            GameObject.Destroy(Target.gameObject);
         }
 
         //内部でIKのEnableの値を設定している
@@ -1464,6 +1466,13 @@ public class UnityVMDPlayer : MonoBehaviour
                     * Quaternion.Inverse(OriginalGhostRotationDictionary[boneName])
                     * OriginalRotationDictionary[boneName];
             }
+        }
+
+        public void Destroy()
+        {
+            if (GhostDictionary[BoneNames.センター].ghost == null) { return; }
+
+            GameObject.Destroy(GhostDictionary[BoneNames.センター].ghost.gameObject);
         }
     }
 
