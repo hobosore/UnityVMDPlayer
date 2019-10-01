@@ -974,7 +974,7 @@ public class UnityVMDPlayer : MonoBehaviour
                 }
                 else
                 {
-                    if (lowerBodyVMDBoneFrame == null || lowerBodyVMDBoneGroup == null) { return; }
+                    if (lowerBodyVMDBoneGroup == null) { return; }
                     VMD.BoneKeyFrame lastPositionVMDBoneFrame = lowerBodyVMDBoneGroup.LastPositionKeyFrame;
                     VMD.BoneKeyFrame nextPositionVMDBoneFrame = lowerBodyVMDBoneGroup.NextPositionKeyFrame;
 
