@@ -979,7 +979,7 @@ public class UnityVMDPlayer : MonoBehaviour
                 }
                 else
                 {
-                    if (lowerBodyVMDBoneGroup == null) { return; }
+                    if (lowerBodyVMDBoneFrame == null || lowerBodyVMDBoneGroup == null) { return; }
                     VMD.BoneKeyFrame lastPositionVMDBoneFrame = lowerBodyVMDBoneGroup.LastPositionKeyFrame;
                     VMD.BoneKeyFrame nextPositionVMDBoneFrame = lowerBodyVMDBoneGroup.NextPositionKeyFrame;
 
@@ -1025,7 +1025,7 @@ public class UnityVMDPlayer : MonoBehaviour
                 }
                 else
                 {
-                    if (lowerBodyVMDBoneGroup == null) { return; }
+                    if (lowerBodyVMDBoneFrame == null || lowerBodyVMDBoneGroup == null) { return; }
                     VMD.BoneKeyFrame lastRotationVMDBoneFrame = lowerBodyVMDBoneGroup.LastRotationKeyFrame;
                     VMD.BoneKeyFrame nextRotationVMDBoneFrame = lowerBodyVMDBoneGroup.NextRotationKeyFrame;
 
