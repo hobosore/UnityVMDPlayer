@@ -9,5 +9,8 @@ This code enables you to use an external animation file, .vmd file (Vocaloid Mot
 つま先IK is not available yet.  
 master-branch is just for unity2019.  
 If you use unity2018, you have to use unity2018-branch.  
+  
+  
+2019/10/07 BUG FIX
     
 **MIT License**
