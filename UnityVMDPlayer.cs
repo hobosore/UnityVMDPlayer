@@ -976,7 +976,7 @@ public class UnityVMDPlayer : MonoBehaviour
                 }
                 else
                 {
-                    if (lowerBodyVMDBoneFrame == null || lowerBodyVMDBoneGroup == null) { return; }
+                    if (lowerBodyVMDBoneGroup == null) { return; }
                     VMD.BoneKeyFrame lastPositionVMDBoneFrame = lowerBodyVMDBoneGroup.LastPositionKeyFrame;
                     VMD.BoneKeyFrame nextPositionVMDBoneFrame = lowerBodyVMDBoneGroup.NextPositionKeyFrame;
 
@@ -992,7 +992,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
                         Vector3 deltaVector = new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
                         boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += deltaVector;
-                        boneGhost.GhostDictionary[BoneNames.上半身].ghost.position -= boneGhost.GhostDictionary[BoneNames.センター].ghost.rotation * lowerBodyVMDBoneFrame.Position * DefaultBoneAmplifier;
+                        boneGhost.GhostDictionary[BoneNames.上半身].ghost.position -= boneGhost.GhostDictionary[BoneNames.センター].ghost.rotation * deltaVector;
                     }
                     else if (lastPositionVMDBoneFrame == null && nextPositionVMDBoneFrame != null)
                     {
@@ -1005,12 +1005,12 @@ public class UnityVMDPlayer : MonoBehaviour
                         float zInterpolation = Mathf.Lerp(0, nextPositionVMDBoneFrame.Position.z, zInterpolationRate);
                         Vector3 deltaVector = new Vector3(xInterpolation, yInterpolation, zInterpolation) * DefaultBoneAmplifier;
                         boneGhost.GhostDictionary[BoneNames.センター].ghost.localPosition += deltaVector;
-                        boneGhost.GhostDictionary[BoneNames.上半身].ghost.position -= boneGhost.GhostDictionary[BoneNames.センター].ghost.rotation * lowerBodyVMDBoneFrame.Position * DefaultBoneAmplifier;
+                        boneGhost.GhostDictionary[BoneNames.上半身].ghost.position -= boneGhost.GhostDictionary[BoneNames.センター].ghost.rotation * deltaVector;
                     }
                     else if (nextPositionVMDBoneFrame == null && lastPositionVMDBoneFrame != null)
                     {
                         boneGhost.GhostDictionary[BoneNames.上半身].ghost.localPosition -= lastPositionVMDBoneFrame.Position * DefaultBoneAmplifier;
-                        boneGhost.GhostDictionary[BoneNames.上半身].ghost.position -= boneGhost.GhostDictionary[BoneNames.センター].ghost.rotation * lowerBodyVMDBoneFrame.Position * DefaultBoneAmplifier;
+                        boneGhost.GhostDictionary[BoneNames.上半身].ghost.position -= boneGhost.GhostDictionary[BoneNames.センター].ghost.rotation * lastPositionVMDBoneFrame.Position * DefaultBoneAmplifier;
                     }
                 }
 
@@ -1022,7 +1022,7 @@ public class UnityVMDPlayer : MonoBehaviour
                 }
                 else
                 {
-                    if (lowerBodyVMDBoneFrame == null || lowerBodyVMDBoneGroup == null) { return; }
+                    if (lowerBodyVMDBoneGroup == null) { return; }
                     VMD.BoneKeyFrame lastRotationVMDBoneFrame = lowerBodyVMDBoneGroup.LastRotationKeyFrame;
                     VMD.BoneKeyFrame nextRotationVMDBoneFrame = lowerBodyVMDBoneGroup.NextRotationKeyFrame;
 
