@@ -318,6 +318,67 @@ namespace UnityVMDReader
         {
             return BoneKeyFrameGroups[(int)boneName].GetKeyFrame(frameNumber);
         }
+
+        public static Vector3 InterporatePosition(VMDReader vmdReader, BoneKeyFrameGroup.BoneNames boneName, int frameNumber)
+        {
+            VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = vmdReader.GetBoneKeyFrameGroup(boneName);
+            VMD.BoneKeyFrame lastFrame = vmdBoneFrameGroup.LastPositionKeyFrame;
+            VMD.BoneKeyFrame nextFrame = vmdBoneFrameGroup.NextPositionKeyFrame;
+
+            if (lastFrame != null && nextFrame != null)
+            {
+                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, lastFrame.FrameNumber, nextFrame.FrameNumber);
+                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, lastFrame.FrameNumber, nextFrame.FrameNumber);
+                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, lastFrame.FrameNumber, nextFrame.FrameNumber);
+
+                float xInterpolation = Mathf.Lerp(lastFrame.Position.x, nextFrame.Position.x, xInterpolationRate);
+                float yInterpolation = Mathf.Lerp(lastFrame.Position.y, nextFrame.Position.y, yInterpolationRate);
+                float zInterpolation = Mathf.Lerp(lastFrame.Position.z, nextFrame.Position.z, zInterpolationRate);
+                return new Vector3(xInterpolation, yInterpolation, zInterpolation);
+            }
+            else if (lastFrame == null && nextFrame != null)
+            {
+                float xInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.X, frameNumber, 0, nextFrame.FrameNumber);
+                float yInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Y, frameNumber, 0, nextFrame.FrameNumber);
+                float zInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Z, frameNumber, 0, nextFrame.FrameNumber);
+
+                float xInterpolation = Mathf.Lerp(0, nextFrame.Position.x, xInterpolationRate);
+                float yInterpolation = Mathf.Lerp(0, nextFrame.Position.y, yInterpolationRate);
+                float zInterpolation = Mathf.Lerp(0, nextFrame.Position.z, zInterpolationRate);
+                return new Vector3(xInterpolation, yInterpolation, zInterpolation);
+            }
+            else if (nextFrame == null && lastFrame != null)
+            {
+                return lastFrame.Position;
+            }
+
+            return Vector3.zero;
+        }
+
+        public static Quaternion InterporateRotation(VMDReader vmdReader, BoneKeyFrameGroup.BoneNames boneName, int frameNumber)
+        {
+            VMDReader.BoneKeyFrameGroup vmdBoneFrameGroup = vmdReader.GetBoneKeyFrameGroup(boneName);
+            VMD.BoneKeyFrame lastFrame = vmdBoneFrameGroup.LastRotationKeyFrame;
+            VMD.BoneKeyFrame nextFrame = vmdBoneFrameGroup.NextRotationKeyFrame;
+
+            if (lastFrame != null && nextFrame != null)
+            {
+                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, lastFrame.FrameNumber, nextFrame.FrameNumber);
+
+                return Quaternion.identity.PlusRotation(Quaternion.Slerp(lastFrame.Rotation, nextFrame.Rotation, rotationInterpolationRate));
+            }
+            else if (lastFrame == null && nextFrame != null)
+            {
+                float rotationInterpolationRate = vmdBoneFrameGroup.Interpolation.GetInterpolationValue(VMD.BoneKeyFrame.Interpolation.BezierCurveNames.Rotation, frameNumber, 0, nextFrame.FrameNumber);
+                return Quaternion.identity.PlusRotation(Quaternion.Slerp(Quaternion.identity, nextFrame.Rotation, rotationInterpolationRate));
+            }
+            else if (lastFrame != null && nextFrame == null)
+            {
+                return Quaternion.identity.PlusRotation(lastFrame.Rotation);
+            }
+
+            return Quaternion.identity;
+        }
     }
 
     public class VMD
