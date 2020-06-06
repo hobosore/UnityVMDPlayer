@@ -259,7 +259,7 @@ public class UnityVMDPlayer : MonoBehaviour
         rightFootIK = new FootIK(vmdReader, Animator, FootIK.Feet.RightFoot, RightFootOffset);
         if (leftToeIK != null) { leftToeIK.Destroy(); }
         leftToeIK = new ToeIK(vmdReader, Animator, boneGhost, ToeIK.Toes.LeftToe);
-        if (rightToeIK != null) { rightFootIK.Destroy(); }
+        if (rightToeIK != null) { rightToeIK.Destroy(); }
         rightToeIK = new ToeIK(vmdReader, Animator, boneGhost, ToeIK.Toes.RightToe);
 
         FrameNumber = 0;
