@@ -9,6 +9,6 @@ master-branch is just for unity2019.
 If you use unity2018, you have to use unity2018-branch.  
   
   
-2019/10/07 BUG FIX
+2020/06/07 BUG FIX
     
 **MIT License**
