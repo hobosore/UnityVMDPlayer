@@ -11,7 +11,7 @@ If you use unity2018, you have to use unity2018-branch.
 "つま先IK" in MMD is not available in unity2018.  
   
   
-2020/06/07 BUG FIX
+2020/06/09 BUG FIX
     
     
 **MIT License**
