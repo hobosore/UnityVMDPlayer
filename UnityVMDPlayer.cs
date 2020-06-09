@@ -895,6 +895,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
         private Vector3 firstHipDown;
         private Vector3 firstHipRight;
+        private Quaternion firstHipRotation;
 
         private float upperLegLength = 0;
         private float lowerLegLength = 0;
@@ -910,7 +911,6 @@ public class UnityVMDPlayer : MonoBehaviour
             firstHipRight = animator.transform.right;
             //注意！オフセットのy座標を逆にしている
             Offset = new Vector3(offset.x, -offset.y, offset.z);
-            Transform theOtherFoot = null;
 
             if (Foot == Feet.LeftFoot)
             {
@@ -918,7 +918,6 @@ public class UnityVMDPlayer : MonoBehaviour
                 HipTransform = animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
                 KneeTransform = animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
                 FootTransform = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
-                theOtherFoot = animator.GetBoneTransform(HumanBodyBones.RightFoot);
             }
             else
             {
@@ -926,7 +925,6 @@ public class UnityVMDPlayer : MonoBehaviour
                 HipTransform = animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
                 KneeTransform = animator.GetBoneTransform(HumanBodyBones.RightLowerLeg);
                 FootTransform = animator.GetBoneTransform(HumanBodyBones.RightFoot);
-                theOtherFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
             }
 
             upperLegLength = Vector3.Distance(HipTransform.position, KneeTransform.position);
@@ -948,11 +946,15 @@ public class UnityVMDPlayer : MonoBehaviour
             };
 
             GameObject targetGameObject = new GameObject();
-            targetGameObject.transform.position = (3 * FootTransform.position - theOtherFoot.position) / 2;
+            targetGameObject.transform.position = FootTransform.position;
             targetGameObject.transform.parent = (Animator.GetBoneTransform(HumanBodyBones.Hips).parent);
             Target = targetGameObject.transform;
             Target.name = Foot.ToString() + TargetName;
             firstLocalPosition = Target.localPosition;
+
+            Vector3 targetVector = Target.position - HipTransform.position;
+            Vector3 hipDown = HipTransform.rotation * Quaternion.Inverse(boneOriginalRotationDictionary[HipTransform]) * firstHipDown;
+            firstHipRotation = Quaternion.AngleAxis(Vector3.Angle(hipDown, targetVector), Vector3.Cross(hipDown, targetVector));
         }
 
         public void IK()
@@ -989,6 +991,7 @@ public class UnityVMDPlayer : MonoBehaviour
 
             Vector3 hipDown = HipTransform.rotation * Quaternion.Inverse(boneOriginalRotationDictionary[HipTransform]) * firstHipDown;
             HipTransform.RotateAround(HipTransform.position, Vector3.Cross(hipDown, targetVector), Vector3.Angle(hipDown, targetVector));
+            HipTransform.rotation = Quaternion.Inverse(firstHipRotation) * HipTransform.rotation;
             Vector3 hipRight = HipTransform.rotation * Quaternion.Inverse(boneOriginalRotationDictionary[HipTransform]) * firstHipRight;
             HipTransform.RotateAround(HipTransform.position, hipRight, -hipAngle);
             hipRight = HipTransform.rotation * Quaternion.Inverse(boneOriginalRotationDictionary[HipTransform]) * firstHipRight;
